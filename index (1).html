@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Beejwise · Floor companion prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#ECECE5;--card:#fff;--ink:#15150F;--ink2:#2A2A24;--lime:#E3F35A;--lime2:#D6E84A;
+  --mut:#6F6F66;--mut2:#9A9A90;--soft:#F1F1EA;--line:#E2E2DA;
+  --red:#B3261E;--redbg:#FADFD9;--amb:#8A5300;--ambbg:#F8EBCB;--grn:#2F6B1F;--grnbg:#E1EDCF;
+  --spring:cubic-bezier(.32,.72,0,1);--out:cubic-bezier(.22,1,.36,1);--snap:cubic-bezier(.34,1.56,.64,1);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:Outfit,system-ui,sans-serif;background:#0E0E0B;color:var(--ink);overflow:hidden;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;text-align:left}
+svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+/* ---------- stage ---------- */
+.stage{position:fixed;inset:0;display:grid;grid-template-columns:1fr;align-items:center;
+  background:radial-gradient(1200px 700px at 50% 40%,#1d1e16 0%,#0E0E0B 60%)}
+.stage::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.05;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+.panel{height:100%;padding:36px 28px;display:flex;flex-direction:column;gap:22px;color:#E9E9E1;overflow:auto;scrollbar-width:none}
+.brandrow{display:flex;align-items:center;gap:10px}
+.brandrow .mk{width:34px;height:34px;border-radius:10px;background:var(--lime);display:grid;place-items:center}
+.brandrow b{font-weight:600;font-size:17px;letter-spacing:-.01em}
+.brandrow span{display:block;font-size:12px;color:#8D8D84}
+.eyebrow{display:inline-flex;align-self:flex-start;border-radius:99px;padding:5px 10px;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#C9D95A;background:rgba(227,243,90,.08);box-shadow:inset 0 0 0 1px rgba(227,243,90,.18)}
+.flow h4{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#77776E;font-weight:500;margin:6px 0 8px}
+.flow button{display:flex;width:100%;align-items:center;gap:10px;padding:8px 10px;border-radius:12px;font-size:14px;color:#BDBDB4;text-align:left;transition:background .35s var(--out),color .35s var(--out)}
+.flow button i{font-style:normal;font-size:11px;color:#66665E;width:26px}
+.flow button:hover{background:rgba(255,255,255,.04);color:#fff}
+.flow button.act{background:rgba(227,243,90,.1);color:var(--lime)}
+.flow button.act i{color:var(--lime)}
+.notes{height:100%;padding:36px 28px;display:flex;flex-direction:column;justify-content:center;gap:16px;color:#E9E9E1}
+.shell{border-radius:26px;padding:6px;background:rgba(255,255,255,.03);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
+.core{border-radius:20px;padding:20px;background:#17170F;box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+.core h3{font-size:20px;font-weight:600;letter-spacing:-.02em;margin:6px 0 8px}
+.core p{font-size:14px;line-height:1.5;color:#A9A99F}
+.core ul{list-style:none;margin-top:12px;display:grid;gap:8px}
+.core li{font-size:13px;color:#D5D5CC;display:flex;gap:8px;line-height:1.4}
+.core li::before{content:"";width:6px;height:6px;margin-top:6px;border-radius:9px;background:var(--lime);flex:none}
+.pill-btn{display:inline-flex;align-items:center;gap:10px;padding:8px 8px 8px 18px;border-radius:99px;background:var(--lime);color:var(--ink);font-weight:600;font-size:14px;transition:transform .4s var(--out)}
+.pill-btn span{width:30px;height:30px;border-radius:99px;background:rgba(0,0,0,.08);display:grid;place-items:center;transition:transform .4s var(--out)}
+.pill-btn:hover span{transform:translateX(2px) rotate(-30deg)}
+.pill-btn:active{transform:scale(.97)}
+.kbd{font-size:12px;color:#77776E;line-height:1.6}
+.kbd b{color:#C9C9BF;font-weight:500}
+
+.device-wrap{display:grid;place-items:center;height:100%}
+.device{width:414px;height:868px;border-radius:66px;padding:12px;background:#050505;
+  box-shadow:0 0 0 1.5px #2b2b27,0 0 0 6px #121210,0 60px 120px -30px rgba(0,0,0,.8),0 30px 60px -20px rgba(227,243,90,.06);
+  transform:scale(var(--s,1));transform-origin:center;flex:none}
+.vp{position:relative;width:390px;height:844px;border-radius:54px;overflow:hidden;overflow:clip;background:var(--bg);isolation:isolate}
+.island{position:absolute;top:11px;left:50%;width:120px;height:34px;margin-left:-60px;border-radius:20px;background:#000;z-index:60}
+
+/* ---------- status bar ---------- */
+.sb{position:absolute;top:0;left:0;right:0;height:50px;display:flex;align-items:center;justify-content:space-between;padding:4px 30px 0 34px;z-index:55;pointer-events:none;color:var(--ink);transition:color .4s var(--out)}
+.sb b{font-weight:600;font-size:15.5px;letter-spacing:-.01em}
+.sb .r{display:flex;gap:6px;align-items:center}
+.vp.dark .sb{color:#fff}
+.homebar{position:absolute;bottom:8px;left:50%;width:136px;height:5px;margin-left:-68px;border-radius:9px;background:var(--ink);z-index:56;opacity:.9;pointer-events:none;transition:background .4s}
+.vp.dark .homebar{background:#fff}
+
+/* ---------- screens ---------- */
+.screen{position:absolute;inset:0;background:var(--bg);visibility:hidden;will-change:transform;box-shadow:-18px 0 40px rgba(0,0,0,.08)}
+.screen.on{visibility:visible}
+.screen.dk{background:#141410;color:#fff}
+.screen .dim{position:absolute;inset:0;background:rgba(10,10,6,.28);opacity:0;pointer-events:none;z-index:40}
+.scroll{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;padding:54px 20px 120px;scrollbar-width:none}
+.scroll::-webkit-scrollbar{display:none}
+.notab .scroll{padding-bottom:40px}
+.rv{}
+.screen.in .rv{animation:rise .9s var(--out) var(--d,0ms) backwards}
+@keyframes rise{from{opacity:0;transform:translateY(22px) scale(.985);filter:blur(4px)}to{opacity:1;transform:none;filter:none}}
+.screen.in .pop{animation:popIn .7s var(--snap) var(--d,0ms) backwards}
+@keyframes popIn{from{opacity:0;transform:scale(.6)}}
+
+.tap{transition:transform .5s var(--out),background-color .4s var(--out),color .4s var(--out),box-shadow .4s var(--out),opacity .4s}
+.tap:active{transform:scale(.965);transition-duration:.12s}
+
+/* type */
+.h1{font-size:27px;font-weight:700;letter-spacing:-.035em;line-height:1.05}
+.hbig{font-size:31px;font-weight:700;letter-spacing:-.04em;line-height:1.08}
+.sub{font-size:13.5px;color:var(--mut);margin-top:3px}
+.lead{font-size:15px;color:var(--mut);line-height:1.45;margin-top:10px}
+.lab{font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--mut);font-weight:600;margin:18px 2px 8px}
+.sec{font-size:16px;font-weight:600;letter-spacing:-.01em;margin:18px 2px 10px}
+
+/* header */
+.hd{display:flex;align-items:center;gap:12px;margin:2px 0 14px}
+.back{width:40px;height:40px;border-radius:99px;background:#fff;display:grid;place-items:center;flex:none}
+.dk .back{background:rgba(255,255,255,.1);color:#fff}
+.back svg{width:20px;height:20px;stroke-width:2.2}
+.hd .h1{font-size:25px}
+.step{margin-left:auto;font-size:13px;color:var(--mut);font-weight:600}
+
+/* cards */
+.card{background:var(--card);border-radius:24px;padding:18px}
+.stack{display:grid;gap:12px}
+.ink{background:var(--ink);color:#fff}
+.btn{display:flex;align-items:center;justify-content:center;gap:10px;height:60px;border-radius:30px;width:100%;font-weight:600;font-size:17px;letter-spacing:-.01em}
+.btn.dark{background:var(--ink);color:#fff}
+.btn.lime{background:var(--lime);color:var(--ink)}
+.btn.white{background:#fff;color:var(--ink);height:52px;font-size:16px}
+.btn.soft{background:var(--soft);color:var(--ink);height:50px;font-size:16px}
+.btn.sm{height:50px;font-size:16px}
+.btn svg{width:18px;height:18px}
+.ibox{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;flex:none;background:var(--soft)}
+.ibox.l{background:var(--lime)} .ibox.r{background:var(--redbg);color:var(--red)} .ibox.a{background:var(--ambbg);color:var(--amb)}
+.chev{margin-left:auto;color:var(--mut2)} .chev svg{width:18px;height:18px}
+.row{display:flex;align-items:center;gap:13px}
+.row b{display:block;font-weight:600;font-size:15.5px;letter-spacing:-.01em}
+.row small{display:block;font-size:13px;color:var(--mut);margin-top:2px}
+.chip{display:inline-flex;align-items:center;gap:6px;height:37px;padding:0 15px;border-radius:99px;background:#fff;font-weight:600;font-size:14.5px;white-space:nowrap}
+.chip.on{background:var(--ink);color:#fff}
+.chips{display:flex;gap:8px;margin:2px -20px 14px;padding:0 20px;overflow-x:auto;scrollbar-width:none}
+.tag{display:inline-flex;align-items:center;height:26px;padding:0 10px;border-radius:99px;font-size:12.5px;font-weight:600;background:var(--soft)}
+.tag.r{background:var(--redbg);color:var(--red)} .tag.a{background:var(--ambbg);color:var(--amb)}
+.stat{background:var(--soft);border-radius:14px;padding:10px 11px}
+.stat small{display:block;font-size:12px;color:var(--mut)}
+.stat b{font-size:16.5px;font-weight:700;letter-spacing:-.02em}
+.stat.a{background:var(--ambbg)} .stat.a b,.stat.a small{color:var(--amb)}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* ---------- tab bar ---------- */
+.tabbar{position:absolute;left:0;right:0;bottom:0;height:90px;background:#fff;z-index:50;display:grid;grid-template-columns:repeat(5,1fr);padding:0 10px 0;
+  box-shadow:0 -1px 0 rgba(0,0,0,.04),0 -20px 40px -20px rgba(0,0,0,.06);transition:transform .55s var(--spring)}
+.tabbar.hide{transform:translateY(110%)}
+.tab{display:flex;flex-direction:column;align-items:center;padding-top:14px;gap:6px;font-size:11.5px;color:var(--mut);font-weight:500;position:relative;z-index:1}
+.tab .ti{width:38px;height:38px;display:grid;place-items:center;border-radius:12px;transition:transform .5s var(--out)}
+.tab.act{color:var(--ink);font-weight:700}
+.tab:active .ti{transform:scale(.88)}
+.tab .bdg{position:absolute;top:8px;left:50%;margin-left:6px;min-width:19px;height:19px;border-radius:99px;background:var(--red);color:#fff;font-size:11px;font-weight:700;display:grid;place-items:center;padding:0 5px;box-shadow:0 0 0 2px #fff;transition:transform .5s var(--snap)}
+.tab.scan .ti{width:56px;height:56px;border-radius:99px;background:var(--ink);color:var(--lime);margin-top:-18px;box-shadow:0 10px 24px -8px rgba(0,0,0,.45)}
+.tab.scan .ti svg{width:26px;height:26px}
+.tab.scan{gap:2px}
+.tbpill{position:absolute;top:14px;left:0;width:38px;height:38px;border-radius:12px;background:var(--lime);z-index:0;transition:transform .6s var(--spring),opacity .3s}
+
+/* ---------- keypad ---------- */
+.keypad{position:absolute;left:14px;right:14px;bottom:34px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.key{height:57px;border-radius:16px;background:#fff;font-size:22px;font-weight:600;display:grid;place-items:center;transition:transform .4s var(--out),background .3s}
+.key:active{transform:scale(.94);background:#E4E4DC;transition-duration:.08s}
+.key.ghost{background:transparent}
+.key.ghost:active{background:rgba(0,0,0,.05)}
+
+/* ---------- splash ---------- */
+#s-splash{background:var(--lime)}
+.logo{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:260px}
+.logo .d{transform-box:fill-box;transform-origin:center}
+.logo .lf{transform-box:fill-box;transform-origin:0% 100%}
+#s-splash.go .logo .d{animation:popIn .6s var(--snap) var(--d) backwards}
+#s-splash.go .logo .lf{animation:leaf .9s var(--snap) var(--d) backwards}
+@keyframes leaf{from{transform:scale(0) rotate(-35deg);opacity:0}}
+#s-splash.go .logo .wm{animation:wm 1s var(--out) .55s backwards}
+@keyframes wm{from{transform:translateY(24px);opacity:0;filter:blur(6px)}}
+.sp-bot{position:absolute;bottom:46px;left:0;right:0;text-align:center;font-size:12.5px;font-weight:600;color:#3d4410}
+.sp-bar{width:126px;height:4px;border-radius:9px;background:rgba(0,0,0,.12);margin:0 auto 18px;overflow:hidden}
+.sp-bar i{display:block;height:100%;width:100%;background:var(--ink);border-radius:9px;transform:scaleX(0);transform-origin:left}
+#s-splash.go .sp-bar i{animation:fill 2.2s var(--out) .3s forwards}
+@keyframes fill{to{transform:scaleX(1)}}
+
+/* onboarding */
+.phone-field{display:flex;align-items:center;height:70px;border-radius:24px;background:#fff;padding:0 20px;margin-top:22px;gap:14px}
+.phone-field .cc{font-size:21px;font-weight:600;color:var(--mut);padding-right:14px;border-right:1px solid var(--line);height:28px;display:flex;align-items:center}
+.phone-field .num{font-size:25px;font-weight:700;letter-spacing:-.01em}
+.caret{display:inline-block;width:2px;height:26px;background:var(--ink);vertical-align:-4px;margin-left:2px;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.note{display:flex;gap:10px;align-items:flex-start;background:#fff;border-radius:18px;padding:14px 16px;font-size:13.5px;color:var(--ink2);line-height:1.4;margin-top:18px}
+.note svg{width:18px;height:18px;margin-top:1px}
+.otp{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-top:34px}
+.otp div{height:78px;border-radius:20px;background:#fff;box-shadow:inset 0 0 0 2px var(--ink);display:grid;place-items:center;font-size:32px;font-weight:700;transition:box-shadow .35s var(--out),background .35s var(--out)}
+.otp div.cur{box-shadow:inset 0 0 0 2px var(--lime2),0 0 0 4px rgba(227,243,90,.35)}
+.otp div.empty{box-shadow:inset 0 0 0 1.5px #D7D7CE}
+.otp div.cur.empty{box-shadow:inset 0 0 0 2px var(--lime2),0 0 0 4px rgba(227,243,90,.35)}
+.otp div.ok{background:var(--lime);box-shadow:inset 0 0 0 2px var(--lime)}
+.otp span{display:inline-block;animation:digit .45s var(--snap)}
+@keyframes digit{from{transform:scale(.4) translateY(10px);opacity:0}}
+.resend{display:flex;align-items:center;gap:12px;margin-top:22px;font-size:14px;color:var(--ink2)}
+.resend .rb{margin-left:auto;height:39px;padding:0 16px;border-radius:99px;background:#fff;font-size:14px;font-weight:600;color:var(--mut2)}
+.resend .rb.en{color:var(--ink)}
+.plant{display:flex;align-items:center;gap:16px;background:#fff;border-radius:26px;padding:18px;transition:background .5s var(--out),transform .5s var(--out)}
+.plant .av{width:46px;height:46px;border-radius:14px;background:var(--soft);display:grid;place-items:center;font-weight:700;font-size:16px;transition:background .5s var(--out)}
+.plant b{font-size:18px;font-weight:700;letter-spacing:-.02em;display:block}
+.plant small{font-size:13px;color:var(--mut)}
+.plant.sel{background:var(--lime)} .plant.sel .av{background:rgba(0,0,0,.06)} .plant.sel small{color:var(--ink)}
+.foot{position:absolute;left:20px;right:20px;bottom:30px}
+.foot::before{content:"";position:absolute;left:-20px;right:-20px;top:-40px;bottom:-30px;background:linear-gradient(to bottom,rgba(236,236,229,0),var(--bg) 45%);z-index:-1;pointer-events:none}
+.foot{z-index:5}
+.foot p{text-align:center;font-size:12px;color:var(--mut);margin-top:14px}
+
+/* today */
+.hero{background:var(--ink);color:#fff;border-radius:26px;padding:18px}
+.hero .eb{font-size:11.5px;letter-spacing:.1em;color:#B9B9AF;font-weight:600}
+.hero .t{font-size:22px;font-weight:700;letter-spacing:-.03em}
+.hero .cnt{margin-left:auto;width:42px;height:42px;border-radius:99px;background:var(--lime);color:var(--ink);font-weight:700;font-size:20px;display:grid;place-items:center}
+.hero p{color:#D2D2C9;font-size:14px;line-height:1.45;margin:14px 0 16px}
+.kpi{border-radius:22px;padding:16px;background:#fff}
+.kpi small{font-size:12.5px;color:var(--mut);display:block}
+.kpi b{font-size:24px;font-weight:700;letter-spacing:-.03em;display:block;margin:4px 0 2px}
+.kpi > span{font-size:12px;color:var(--mut)}
+.kpi.r{background:var(--redbg)} .kpi.r b{color:var(--red)}
+.need{background:#fff;border-radius:20px;padding:12px 14px}
+.gate{background:#fff;border-radius:22px;padding:16px}
+.gate .gr{display:flex;align-items:center;gap:10px;font-size:14px;padding:6px 0}
+.gate .gr i{width:8px;height:8px;border-radius:9px;background:var(--red)}
+.gate .gr i.a{background:#C9881A} .gate .gr i.g{background:#9A9A90}
+.gate .gr b{font-weight:600}
+.gate .gr em{font-style:normal;color:var(--mut)}
+.gate .gr span{margin-left:auto;color:var(--mut)}
+
+/* sessions */
+.sess{background:#fff;border-radius:26px;padding:16px}
+.sess .ln{width:44px;height:44px;border-radius:13px;background:var(--soft);display:grid;place-items:center;font-weight:700;font-size:16px}
+.sess .ln.l{background:var(--lime)}
+.sess .id{font-size:18px;font-weight:700;letter-spacing:-.02em}
+.sess .meta{font-size:13px;color:var(--mut)}
+.sess .rt{margin-left:auto;text-align:right}
+.sess .rt small{display:block;font-size:12px;color:var(--mut);margin-top:4px}
+.prog{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:18px 0 18px}
+.prog i{height:5px;border-radius:9px;background:var(--line);transform-origin:left}
+.prog i.d{background:var(--ink)} .prog i.n{background:var(--lime)}
+.screen.in .prog i.d,.screen.in .prog i.n{animation:grow .9s var(--out) var(--d,200ms) backwards}
+@keyframes grow{from{transform:scaleX(0)}}
+
+/* queue */
+.qhd{display:flex;align-items:flex-start;gap:10px;margin-bottom:14px}
+.round{width:44px;height:44px;border-radius:99px;background:#fff;display:grid;place-items:center}
+.round.big{width:46px;height:46px;background:var(--ink);color:var(--lime)}
+.round.big svg{width:24px;height:24px;stroke-width:2.4}
+.truck{background:#fff;border-radius:26px;padding:16px}
+.truck .id{font-size:19px;font-weight:700;letter-spacing:-.02em}
+.truck .ibox{width:46px;height:46px;border-radius:13px}
+
+/* detail */
+.tl{position:relative}
+.tl .st{display:flex;gap:14px;position:relative;padding-bottom:22px}
+.tl .st:last-child{padding-bottom:4px}
+.tl .st::before{content:"";position:absolute;left:12px;top:26px;bottom:2px;width:2px;background:var(--line);border-radius:2px}
+.tl .st:last-child::before{display:none}
+.tl .st.d::before{background:#CFCFC6}
+.dot{width:26px;height:26px;border-radius:99px;flex:none;display:grid;place-items:center;background:#fff;box-shadow:inset 0 0 0 2px #D5D5CC;position:relative;z-index:1;transition:background .5s var(--out),box-shadow .5s}
+.dot svg{width:14px;height:14px;stroke-width:3;opacity:0;transform:scale(.4);transition:all .5s var(--snap)}
+.st.d .dot{background:var(--ink);box-shadow:none;color:#fff}
+.st.n .dot{background:var(--lime);box-shadow:none;color:#fff}
+.st.d .dot svg,.st.n .dot svg{opacity:1;transform:none}
+.st .tx b{display:block;font-weight:600;font-size:16px;letter-spacing:-.01em}
+.st .tx small{font-size:13.5px;color:var(--mut)}
+.st .tm{margin-left:auto;font-weight:600;font-size:13px;white-space:nowrap}
+.st.p .tx b{color:var(--mut2)}
+.act-row{background:#fff;border-radius:20px;padding:13px 14px}
+.act-row b{font-weight:600}
+.caption{text-align:center;font-size:12.5px;color:var(--mut);margin-top:12px}
+
+/* sample */
+.howto li{display:flex;gap:14px;font-size:14.5px;line-height:1.4;margin-top:14px}
+.howto li i{font-style:normal;width:26px;height:26px;border-radius:99px;background:var(--lime);display:grid;place-items:center;font-weight:700;font-size:13px;flex:none}
+.inp{height:54px;border-radius:18px;background:#fff;display:flex;align-items:center;padding:0 16px;font-weight:600;font-size:16px}
+.tog{height:48px;padding:0 24px;border-radius:99px;background:#fff;font-weight:600;font-size:15.5px}
+.tog.on{background:var(--lime)}
+.tog:active{transform:scale(.94)}
+.togs{display:flex;flex-wrap:wrap;gap:10px}
+.mstrip{display:flex;align-items:center;gap:14px;background:var(--ambbg);border-radius:24px;padding:16px;color:var(--amb)}
+.mstrip .ibox{background:#fff;width:42px;height:42px}
+.mstrip b{font-size:20px;font-weight:700;letter-spacing:-.02em}
+.mstrip span{font-size:13px;text-align:right;margin-left:auto;line-height:1.4}
+
+/* stoppage */
+.stepper{display:flex;align-items:center;justify-content:space-between;margin-top:12px}
+.circ{width:52px;height:52px;border-radius:99px;display:grid;place-items:center;box-shadow:inset 0 0 0 1.5px #D9D9D0}
+.circ.l{background:var(--lime);box-shadow:none}
+.circ:active{transform:scale(.9)}
+.bign{font-size:44px;font-weight:800;letter-spacing:-.05em;line-height:1;display:inline-block}
+.reason{background:#fff;border-radius:20px;padding:15px;min-height:76px;display:flex;flex-direction:column;justify-content:space-between;gap:10px;text-align:left}
+.reason b{font-weight:600;font-size:15px}
+.reason svg{width:20px;height:20px}
+.reason.on{background:var(--lime)}
+textarea{width:100%;border:0;outline:0;resize:none;background:#fff;border-radius:22px;padding:20px 22px;font:500 15.5px/1.45 Outfit,sans-serif;color:var(--ink);height:88px}
+
+/* where */
+.dest{display:flex;gap:16px;align-items:flex-start;background:#fff;border-radius:28px;padding:22px 18px;text-align:left;width:100%}
+.dest .ibox{width:56px;height:56px;border-radius:16px}
+.dest .ibox svg{width:26px;height:26px}
+.dest b{font-size:19px;font-weight:700;letter-spacing:-.025em;display:block;margin-top:2px}
+.dest small{font-size:14px;color:var(--mut);line-height:1.4;display:block;margin-top:4px}
+.dest.on{background:var(--lime)} .dest.on small{color:var(--ink2)} .dest.on .ibox{background:rgba(255,255,255,.75)}
+.dest.locked{opacity:.55}
+.dest .lk{margin-left:auto;color:var(--mut)}
+.warn{display:flex;gap:12px;background:var(--ambbg);color:var(--amb);border-radius:18px;padding:15px 16px;font-size:13.5px;line-height:1.45;transition:background .6s var(--out),color .6s}
+.warn svg{width:18px;height:18px;margin-top:1px}
+.warn.ok{background:var(--grnbg);color:var(--grn)}
+
+/* sent / stored */
+.done-hero{background:var(--ink);color:#fff;border-radius:28px;padding:20px}
+.done-hero .badge{width:52px;height:52px;border-radius:15px;background:var(--lime);color:var(--ink);display:grid;place-items:center}
+.done-hero h2{font-size:27px;font-weight:700;letter-spacing:-.035em;margin:18px 0 6px}
+.done-hero p{color:#D2D2C9;font-size:15px;line-height:1.45}
+.done-hero .grid3{margin-top:16px}
+.done-hero .stat{background:rgba(255,255,255,.08)}
+.done-hero .stat small{color:#B9B9AF}
+.done-hero .stat b{color:#fff}
+.done-hero .stat b.l{color:var(--lime)}
+.st.g .dot{background:#D6D6CD;box-shadow:none;color:#fff}
+.st.g .dot svg{opacity:1;transform:none}
+.st.g .tx b{color:var(--mut2)}
+
+/* bays */
+.bay{background:#fff;border-radius:22px;padding:15px 15px 13px;text-align:left}
+.bay .top{display:flex;align-items:baseline;justify-content:space-between}
+.bay b{font-size:17px;font-weight:700;letter-spacing:-.02em}
+.bay em{font-style:normal;font-size:12.5px;font-weight:600}
+.bay em.r{color:var(--red)}
+.bar{height:6px;border-radius:9px;background:var(--line);margin:10px 0 9px;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:9px;background:var(--ink);transform-origin:left}
+.screen.in .bar i{animation:grow 1.1s var(--out) var(--d,200ms) backwards}
+.bar i.r{background:#C98378}
+.bay small{font-size:12.5px;color:var(--mut)}
+.bay.on{background:var(--lime)} .bay.on .bar{background:rgba(0,0,0,.1)} .bay.on small{color:var(--ink2)}
+.bay.full{background:transparent;box-shadow:inset 0 0 0 1.5px #DCDCD3}
+.bay.full b,.bay.full em,.bay.full small{color:#AFAFA6}
+.bay.full .bar i{background:#CACABF}
+.check-list p{display:flex;gap:10px;font-size:14px;line-height:1.4;margin-top:9px;color:var(--ink2)}
+.check-list svg{width:16px;height:16px;color:var(--grn);margin-top:2px;stroke-width:2.4}
+
+/* passport */
+.rel{display:flex;align-items:center;gap:14px;background:var(--grnbg);border-radius:24px;padding:16px;color:var(--grn)}
+.rel .ibox{width:44px;height:44px;background:#fff}
+.rel b{font-size:17.5px;font-weight:700;letter-spacing:-.02em;display:block}
+.rel small{font-size:13.5px;color:#43633a}
+.q3 .kpi{padding:13px}
+.q3 .kpi b{font-size:21px;color:var(--grn)}
+.ptl .st::before{left:6px;top:14px}
+.ptl .dot{width:14px;height:14px;margin-top:4px;background:var(--ink);box-shadow:none}
+.ptl .st:last-child .dot{background:var(--lime)}
+.ptl .tx small{display:block}
+.ptl .tx em{font-style:normal;font-size:12px;color:var(--mut2)}
+
+/* alerts */
+.alert{background:#fff;border-radius:26px;padding:16px}
+.alert .row{align-items:flex-start}
+.alert b{font-size:16.5px;font-weight:700;letter-spacing:-.02em;line-height:1.25}
+.alert p{font-size:14px;color:var(--ink2);margin-top:3px;line-height:1.4}
+.alert time{display:block;font-size:12.5px;color:var(--mut);margin-top:5px}
+.alert .u{width:9px;height:9px;border-radius:9px;margin-left:auto;margin-top:6px;flex:none}
+.alert .btn{margin-top:14px;height:48px;font-size:15.5px}
+
+/* you */
+.prof{background:var(--ink);color:#fff;border-radius:26px;padding:20px}
+.prof .av{width:58px;height:58px;border-radius:17px;background:var(--lime);color:var(--ink);display:grid;place-items:center;font-weight:700;font-size:22px}
+.prof .kv{display:flex;align-items:center;justify-content:space-between;font-size:13.5px;color:#C9C9BF;padding:6px 0}
+.prof .kv b{color:#fff;font-weight:600;font-size:15px;display:flex;align-items:center;gap:10px}
+.eye{width:31px;height:31px;border-radius:99px;background:rgba(255,255,255,.1);display:grid;place-items:center;color:#fff}
+.eye svg{width:16px;height:16px}
+.setting{display:flex;align-items:center;gap:13px;padding:12px 0}
+.setting b{font-weight:600;font-size:15.5px;display:block}
+.setting small{font-size:12.5px;color:var(--mut)}
+.sw{margin-left:auto;width:46px;height:28px;border-radius:99px;background:#E1E1D9;position:relative;transition:background .45s var(--out);flex:none}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:99px;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.18);transition:transform .55s var(--snap)}
+.sw.on{background:var(--ink)} .sw.on::after{transform:translateX(18px)}
+.sw:active::after{width:26px}
+.ver{font-size:12px;color:var(--mut);text-align:center;margin-top:14px}
+
+/* scan */
+#s-scan .scroll{padding-bottom:0}
+.frame{position:relative;width:246px;height:246px;margin:70px auto 0}
+.frame .glass{position:absolute;inset:0;border-radius:30px;background:linear-gradient(180deg,#26261F,#1E1E18)}
+.frame .cn{position:absolute;width:50px;height:50px;border:5px solid var(--lime);transition:transform .6s var(--snap)}
+.cn.a{top:-2px;left:-2px;border-right:0;border-bottom:0;border-radius:28px 0 0 0}
+.cn.b{top:-2px;right:-2px;border-left:0;border-bottom:0;border-radius:0 28px 0 0}
+.cn.c{bottom:-2px;left:-2px;border-right:0;border-top:0;border-radius:0 0 0 28px}
+.cn.d{bottom:-2px;right:-2px;border-left:0;border-top:0;border-radius:0 0 28px 0}
+.frame.found .cn.a{transform:translate(12px,12px)} .frame.found .cn.b{transform:translate(-12px,12px)}
+.frame.found .cn.c{transform:translate(12px,-12px)} .frame.found .cn.d{transform:translate(-12px,-12px)}
+.laser{position:absolute;left:18px;right:18px;top:50%;height:3px;border-radius:3px;background:var(--lime);box-shadow:0 0 18px 4px rgba(227,243,90,.45);animation:scanl 2.4s var(--out) infinite alternate}
+@keyframes scanl{from{transform:translateY(-80px)}to{transform:translateY(80px)}}
+.frame.found .laser{opacity:0;transition:opacity .3s}
+.found-chip{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.6);opacity:0;background:var(--lime);color:var(--ink);border-radius:18px;padding:12px 16px;text-align:center;transition:all .6s var(--snap);white-space:nowrap}
+.found-chip b{display:block;font-size:17px;font-weight:700}
+.found-chip small{font-size:12.5px}
+.frame.found .found-chip{opacity:1;transform:translate(-50%,-50%) scale(1)}
+.scan-tx{text-align:center;color:#D7D7CE;font-size:15.5px;line-height:1.5;margin:28px 6px 0}
+.scan-foot{position:absolute;left:20px;right:20px;bottom:116px}
+.scan-foot p{text-align:center;font-size:12.5px;color:#8E8E85;margin-top:16px}
+.spin{width:18px;height:18px;border-radius:99px;border:2.4px solid rgba(0,0,0,.2);border-top-color:var(--ink);animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* sheets */
+.scrim{position:absolute;inset:0;background:rgba(18,18,12,.32);opacity:0;pointer-events:none;z-index:70}
+.scrim.on{pointer-events:auto}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--bg);border-radius:30px 30px 0 0;z-index:71;transform:translateY(105%);padding:10px 20px 30px;box-shadow:0 -20px 50px -10px rgba(0,0,0,.25);visibility:hidden}
+.sheet.open{visibility:visible}
+.grab{height:22px;margin:-10px -20px 0;display:grid;place-items:center;cursor:grab;touch-action:none}
+.grab i{width:40px;height:5px;border-radius:9px;background:#CFCFC5}
+.sheet .h1{font-size:25px}
+.xbtn{width:42px;height:42px;border-radius:99px;background:#fff;display:grid;place-items:center;margin-left:auto}
+.field{height:56px;border-radius:18px;background:#fff;display:flex;align-items:center;padding:0 16px;font-weight:600;font-size:17px;gap:8px;transition:box-shadow .35s var(--out)}
+.field.focus{box-shadow:inset 0 0 0 2px var(--lime2)}
+.field.err{box-shadow:inset 0 0 0 2px #E7A79C}
+.field .ph{color:#B9B9AF;font-weight:500;font-size:15px}
+.field .nx{margin-left:auto;height:28px;padding:0 11px;border-radius:99px;background:var(--soft);font-size:12.5px;font-weight:600;display:grid;place-items:center}
+.bags{display:flex;align-items:center;justify-content:space-between;padding:0 6px}
+.mini{width:40px;height:40px;border-radius:99px;display:grid;place-items:center;background:var(--soft)}
+.mini.l{background:var(--lime)}
+.mini:active{transform:scale(.88)}
+.crop-list{overflow:hidden;max-height:0;transition:max-height .55s var(--spring)}
+.crop-list.open{max-height:260px}
+.crop-list div{background:#fff;border-radius:18px;margin-top:8px;padding:6px}
+.crop-list button{display:flex;width:100%;padding:11px 12px;border-radius:12px;font-weight:600;font-size:15px;justify-content:space-between}
+.crop-list button:hover{background:var(--soft)}
+.crop-list button small{color:var(--mut);font-weight:500}
+.mbox{background:#fff;border-radius:24px;padding:16px 16px 14px;margin-top:14px}
+.mbox .bign{font-size:30px}
+.mbox .band{font-size:12.5px;color:var(--mut);transition:color .4s}
+.mbox .band.w{color:var(--amb)}
+.chev-r{transition:transform .5s var(--spring)}
+.open-dd .chev-r{transform:rotate(180deg)}
+
+/* toast */
+.toast{position:absolute;top:10px;left:50%;z-index:80;background:#0A0A07;color:#fff;border-radius:24px;display:flex;align-items:center;gap:10px;padding:10px 18px 10px 10px;min-width:126px;transform:translate(-50%,-140%);font-size:14px;font-weight:500;white-space:nowrap;pointer-events:none;box-shadow:0 18px 40px -12px rgba(0,0,0,.45)}
+.toast .tk{width:30px;height:30px;border-radius:99px;background:var(--lime);color:var(--ink);display:grid;place-items:center}
+.toast .tk svg{width:16px;height:16px;stroke-width:2.8}
+
+.hidden{display:none!important}
+.vp.big .scroll{zoom:1.06}
+
+@media (max-width:520px){
+  body{background:var(--bg)}
+  .stage{background:var(--bg)} .stage::before{display:none}
+  .device{padding:0;border-radius:0;background:none;box-shadow:none}
+  .island{display:none}
+  .vp{border-radius:0}
+}
+</style>
+</head>
+<body>
+<div class="stage">
+
+  <div class="device-wrap"><div class="device" id="device"><div class="vp" id="vp">
+    <div class="island"></div>
+    <div class="sb"><b>14:32</b><div class="r">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1" opacity=".35"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M1.5 4.2a9.5 9.5 0 0 1 13 0M4 7a6 6 0 0 1 8 0"/><circle cx="8" cy="10" r="1.2" fill="currentColor" stroke="none"/></svg>
+      <svg width="26" height="13" viewBox="0 0 26 13" fill="none"><rect x=".7" y=".7" width="21.6" height="11.6" rx="3.6" stroke="currentColor" stroke-width="1.2" opacity=".5"/><rect x="2.6" y="2.6" width="15" height="7.8" rx="2" fill="currentColor"/><path d="M24 4.5v4c.8-.3 1.3-1.1 1.3-2s-.5-1.7-1.3-2z" fill="currentColor" opacity=".5"/></svg>
+    </div></div>
+
+    <!-- ================= SPLASH ================= -->
+    <section class="screen notab" id="s-splash" data-theme="lime">
+      <svg class="logo" viewBox="0 0 260 64">
+        <g fill="#15150F">
+          <circle class="d" style="--d:.05s" cx="6" cy="18" r="2.6"/><circle class="d" style="--d:.1s" cx="6" cy="32" r="2.6"/><circle class="d" style="--d:.15s" cx="6" cy="46" r="2.6"/>
+          <circle class="d" style="--d:.12s" cx="19" cy="18" r="3.2"/><circle class="d" style="--d:.17s" cx="19" cy="32" r="3.2"/><circle class="d" style="--d:.22s" cx="19" cy="46" r="3.2"/>
+          <path class="lf" style="--d:.28s" d="M29 31c0-9 5-15.5 13-17.5-1 9-5 15.5-13 17.5z"/>
+          <path class="lf" style="--d:.38s" d="M29 50c0-9 5-15.5 13-17.5-1 9-5 15.5-13 17.5z"/>
+          <text class="wm" x="52" y="47" font-family="Outfit" font-weight="600" font-size="44" letter-spacing="-1.6">Beejwise</text>
+        </g>
+      </svg>
+      <div class="sp-bot"><div class="sp-bar"><i></i></div>Floor companion · version 3.0</div>
+    </section>
+
+    <!-- ================= MOBILE ================= -->
+    <section class="screen notab" id="s-mobile">
+      <div class="scroll">
+        <div class="hd rv" style="height:40px"><span class="step">Step 1 of 3</span></div>
+        <h1 class="hbig rv" style="margin-top:22px">What is your<br>mobile number?</h1>
+        <p class="lead rv">We send a four digit code to it. No password to remember on the floor.</p>
+        <div class="phone-field rv" id="phoneField"><span class="cc">+91</span><span class="num"><span id="phoneNum">98110 44712</span><span class="caret"></span></span></div>
+        <div class="note rv"><i data-i="info"></i><span>Use the number your plant has on record. The manager can add a new one from the dashboard.</span></div>
+        <button class="btn dark tap rv" style="margin-top:20px" id="sendCode">Send me the code</button>
+      </div>
+      <div class="keypad" data-pad="phone"></div>
+    </section>
+
+    <!-- ================= OTP ================= -->
+    <section class="screen notab" id="s-otp">
+      <div class="scroll">
+        <div class="hd rv"><button class="back tap" data-back><i data-i="chev-left"></i></button><span class="step">Step 2 of 3</span></div>
+        <h1 class="hbig rv" style="margin-top:22px">Type the code<br>we just sent</h1>
+        <p class="sub rv" style="font-size:15px;margin-top:8px">Sent to <b style="color:var(--ink)" id="sentTo">+91 98110 44712</b></p>
+        <div class="otp rv" id="otp"><div></div><div></div><div></div><div></div></div>
+        <div class="resend rv"><span class="round" style="width:34px;height:34px"><i data-i="clock"></i></span><span id="resendTx">Resend in <b>24 seconds</b></span><button class="rb tap" id="resendBtn">Resend</button></div>
+        <button class="btn dark tap rv" style="margin-top:28px" id="checkCode">Check the code</button>
+      </div>
+      <div class="keypad" data-pad="otp"></div>
+    </section>
+
+    <!-- ================= PLANT ================= -->
+    <section class="screen notab" id="s-plant">
+      <div class="scroll">
+        <div class="hd rv"><button class="back tap" data-back><i data-i="chev-left"></i></button><span class="step">Step 3 of 3</span></div>
+        <h1 class="hbig rv" style="margin-top:22px">Which plant<br>are you at?</h1>
+        <p class="lead rv" style="font-size:14.5px">Pick it once. Everything you log goes against this plant for the whole shift.</p>
+        <div class="stack" style="margin-top:18px" id="plants">
+          <button class="plant tap sel rv" data-p="Karnal"><span class="av">KR</span><span><b>Karnal</b><small>Haryana · 6 lines · shift B now</small></span></button>
+          <button class="plant tap rv" data-p="Medchal"><span class="av">MD</span><span><b>Medchal</b><small>Telangana · 4 lines</small></span></button>
+          <button class="plant tap rv" data-p="Jalna"><span class="av">JL</span><span><b>Jalna</b><small>Maharashtra · 3 lines</small></span></button>
+          <button class="plant tap rv" data-p="Kurnool"><span class="av">KN</span><span><b>Kurnool</b><small>Andhra Pradesh · 4 lines</small></span></button>
+        </div>
+      </div>
+      <div class="foot"><button class="btn dark tap" id="startShift">Start my shift</button><p>Works offline. Anything you log syncs when the signal returns.</p></div>
+    </section>
+
+    <!-- ================= TODAY ================= -->
+    <section class="screen" id="s-today">
+      <div class="scroll">
+        <div class="rv" style="margin:2px 0 14px"><h1 class="h1" id="hello">Shift B, Suresh</h1><p class="sub"><span id="plantName">Karnal</span> plant · 7 h 28 min left</p></div>
+        <div class="hero rv">
+          <div class="row"><span class="ibox l" style="width:46px;height:46px;border-radius:13px;color:var(--ink)"><i data-i="laptop"></i></span>
+            <span><span class="eb">ON YOUR LINES NOW</span><span class="t" style="display:block">Active sessions</span></span><span class="cnt" id="activeCnt">4</span></div>
+          <p id="heroTx">One is waiting on you to finish it. The other three are running normally.</p>
+          <button class="btn lime tap sm" data-go="sessions" style="height:52px">View all</button>
+        </div>
+        <div class="grid2 rv" style="margin-top:10px">
+          <div class="kpi"><small>You processed</small><b><span data-count="96">96</span> t</b><span>of 124 t today</span></div>
+          <div class="kpi r"><small style="color:var(--red)">Downtime</small><b><span data-count="58" id="dtMin">58</span> min</b><span style="color:var(--red)">limit is 30</span></div>
+        </div>
+        <h3 class="sec rv">Needs you</h3>
+        <div class="stack" style="gap:8px" id="needs">
+          <button class="need row tap rv" data-row="finish" data-go="detail" data-lot="0404" style="width:100%;text-align:left"><span class="ibox l"><i data-i="check"></i></span><span><b>Lot 0404 is on the last stage</b><small>Finish it and say where it goes</small></span><span class="chev"><i data-i="chev-right"></i></span></button>
+          <button class="need row tap rv" data-row="stop" data-go="stoppage" style="width:100%;text-align:left"><span class="ibox r"><i data-i="pause"></i></span><span><b>Drier 2 has been down 41 min</b><small>Log the reason so it counts</small></span><span class="chev"><i data-i="chev-right"></i></span></button>
+          <button class="need row tap rv" data-row="sample" data-go="sample" style="width:100%;text-align:left"><span class="ibox a"><i data-i="flask"></i></span><span><b>Sample due for lot 0402</b><small>Draw it before cleaning ends</small></span><span class="chev"><i data-i="chev-right"></i></span></button>
+          <div class="need row hidden" id="allClear" style="padding:16px"><span class="ibox l"><i data-i="check"></i></span><span><b>You are all caught up</b><small>Nothing is waiting on you right now</small></span></div>
+        </div>
+        <div class="gate rv" style="margin-top:12px">
+          <div class="row" style="margin-bottom:8px"><b style="font-size:16px">Waiting at the gate</b><span class="tag a">3 trucks</span><button style="margin-left:auto;font-weight:600;font-size:14px" data-tab="queue">See all</button></div>
+          <div class="gr"><i></i><b>HR 26 9031</b><em>Paddy, 24 t</em><span>54 min</span></div>
+          <div class="gr"><i class="a"></i><b>PB 11 7740</b><em>Maize, 31 t</em><span>41 min</span></div>
+          <div class="gr"><i class="g"></i><b>HR 44 2210</b><em>Cotton, 19 t</em><span>12 min</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= SESSIONS ================= -->
+    <section class="screen" id="s-sessions">
+      <div class="scroll">
+        <div class="hd rv"><button class="back tap" data-back><i data-i="chev-left"></i></button><div><h1 class="h1">Active sessions</h1><p class="sub"><span id="linesTx">Four lines</span> running at Karnal</p></div></div>
+        <div class="chips rv" data-filter="sessList">
+          <button class="chip on tap" data-f="all">All lines <span>4</span></button>
+          <button class="chip tap" data-f="ready">Ready to finish <span>1</span></button>
+          <button class="chip tap" data-f="wet">Wet seed <span>2</span></button>
+        </div>
+        <div class="stack" id="sessList">
+          <div class="sess rv" data-k="all ready wet" data-lot="0404">
+            <div class="row"><span class="ln l">L1</span><span><span class="id">KR-26K-0404</span><br><span class="meta">Maize · HR 55 1188 · 32 t</span></span><span class="rt"><span class="tag a">17.8%</span><small>2 h 30 m</small></span></div>
+            <div class="prog"><i class="d"></i><i class="d"></i><i class="d"></i><i class="n"></i></div>
+            <button class="btn dark tap sm" data-go="where" data-lot="0404">Finish this session</button>
+          </div>
+          <div class="sess rv" data-k="all" data-lot="0402">
+            <div class="row"><span class="ln">L2</span><span><span class="id">KR-26K-0402</span><br><span class="meta">Maize · HR 32 4052 · 28 t</span></span><span class="rt"><span class="tag">13.3%</span><small>1 h 48 m</small></span></div>
+            <div class="prog"><i class="d"></i><i class="d"></i><i class="n"></i><i></i></div>
+            <button class="btn soft tap" data-go="detail" data-lot="0402">Open <i data-i="chev-right"></i></button>
+          </div>
+          <div class="sess rv" data-k="all wet" data-lot="0399">
+            <div class="row"><span class="ln">L3</span><span><span class="id">KR-26K-0399</span><br><span class="meta">Paddy · HR 19 2277 · 26 t</span></span><span class="rt"><span class="tag">14.6%</span><small>52 m</small></span></div>
+            <div class="prog"><i class="d"></i><i class="n"></i><i></i><i></i></div>
+            <button class="btn soft tap" data-go="detail" data-lot="0399">Open <i data-i="chev-right"></i></button>
+          </div>
+          <div class="sess rv" data-k="all" data-lot="0396">
+            <div class="row"><span class="ln">L5</span><span><span class="id">KR-26K-0396</span><br><span class="meta">Cotton · PB 08 4411 · 18 t</span></span><span class="rt"><span class="tag">9.2%</span><small>14 m</small></span></div>
+            <div class="prog"><i class="n"></i><i></i><i></i><i></i></div>
+            <button class="btn soft tap" data-go="detail" data-lot="0396">Open <i data-i="chev-right"></i></button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= QUEUE ================= -->
+    <section class="screen" id="s-queue">
+      <div class="scroll">
+        <div class="qhd rv"><div><h1 class="h1">Gate queue</h1><p class="sub" id="qSub">3 trucks waiting, longest 54 min</p></div>
+          <button class="round tap" id="qSort" style="margin-left:auto"><i data-i="filter"></i></button><button class="round big tap" id="qAdd"><i data-i="plus"></i></button></div>
+        <div class="stack" id="qList">
+          <div class="truck rv" data-w="54">
+            <div class="row"><span class="ibox l"><i data-i="truck"></i></span><span><span class="id">HR 26 9031</span><br><span class="meta" style="font-size:13px;color:var(--mut)">Paddy · 24 t · Jaspal Sidhu</span></span><span class="tag r" style="margin-left:auto">54 min</span></div>
+            <div class="grid3" style="margin:14px 0"><div class="stat"><small>Moisture</small><b>14.1%</b></div><div class="stat"><small>Bags</small><b>240</b></div><div class="stat"><small>Lot</small><b>0406</b></div></div>
+            <button class="btn dark tap sm" data-go="detail" data-lot="0406"><i data-i="play"></i>Start this session</button>
+          </div>
+          <div class="truck rv" data-w="41">
+            <div class="row"><span class="ibox"><i data-i="truck"></i></span><span><span class="id">PB 11 7740</span><br><span class="meta" style="font-size:13px;color:var(--mut)">Maize · 31 t · Harpreet Kaur</span></span><span class="tag a" style="margin-left:auto">41 min</span></div>
+            <div class="grid3" style="margin:14px 0"><div class="stat a"><small>Moisture</small><b>18.6%</b></div><div class="stat"><small>Bags</small><b>310</b></div><div class="stat"><small>Lot</small><b>0407</b></div></div>
+            <button class="btn lime tap sm" data-go="detail" data-lot="0407"><i data-i="play"></i>Start this session</button>
+          </div>
+          <div class="truck rv" data-w="12">
+            <div class="row"><span class="ibox"><i data-i="truck"></i></span><span><span class="id">HR 44 2210</span><br><span class="meta" style="font-size:13px;color:var(--mut)">Cotton · 19 t · Mohit Rana</span></span><span class="tag" style="margin-left:auto">12 min</span></div>
+            <div class="grid3" style="margin:14px 0"><div class="stat"><small>Moisture</small><b>9.4%</b></div><div class="stat"><small>Bags</small><b>190</b></div><div class="stat"><small>Lot</small><b>0408</b></div></div>
+            <button class="btn lime tap sm" data-go="detail" data-lot="0408"><i data-i="play"></i>Start this session</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= SCAN ================= -->
+    <section class="screen dk" id="s-scan" data-theme="dark">
+      <div class="scroll">
+        <div class="hd rv"><button class="back tap" data-tab="today"><i data-i="chev-left"></i></button><h1 class="h1" style="font-size:21px">Scan a lot tag</h1><button class="back tap" id="flash" style="margin-left:auto"><i data-i="bolt"></i></button></div>
+        <div class="frame rv" id="frame"><div class="glass"></div><i class="cn a"></i><i class="cn b"></i><i class="cn c"></i><i class="cn d"></i><div class="laser"></div>
+          <div class="found-chip"><b>KR-26K-0404</b><small>Maize · Line 1 · treatment</small></div></div>
+        <p class="scan-tx rv">Hold the phone over the tag on the bag or the slip on the truck. It reads in about a second.</p>
+      </div>
+      <div class="scan-foot"><button class="btn lime tap" id="findLot">Find the lot</button><p>Last scan: KR-26K-0404, two minutes ago</p></div>
+    </section>
+
+    <!-- ================= DETAIL ================= -->
+    <section class="screen" id="s-detail">
+      <div class="scroll">
+        <div class="hd rv"><button class="back tap" data-back><i data-i="chev-left"></i></button><div><h1 class="h1" id="dtTitle">Lot KR-26K-0404</h1><p class="sub" id="dtSub">Maize · HR 55 1188 · 32 t</p></div></div>
+        <div class="card rv" style="border-radius:26px;padding:20px"><div class="tl" id="dtSteps"></div></div>
+        <div class="grid3 rv" style="margin-top:10px" id="dtStats"></div>
+        <div class="stack" style="gap:8px;margin-top:12px">
+          <button class="act-row row tap rv" data-go="sample" style="width:100%;text-align:left"><span class="ibox"><i data-i="flask"></i></span><b>Draw a sample for the lab</b><span class="chev"><i data-i="chev-right"></i></span></button>
+          <button class="act-row row tap rv" data-go="stoppage" style="width:100%;text-align:left"><span class="ibox"><i data-i="pause"></i></span><b>Log a stoppage</b><span class="chev"><i data-i="chev-right"></i></span></button>
+          <button class="act-row row tap rv" data-go="passport" style="width:100%;text-align:left"><span class="ibox"><i data-i="doc"></i></span><b>See the lot passport</b><span class="chev"><i data-i="chev-right"></i></span></button>
+        </div>
+        <button class="btn dark tap rv" style="margin-top:14px" id="dtMain">Finish this session</button>
+        <p class="caption rv" id="dtCap">Finishing asks you where the lot goes next.</p>
+      </div>
+    </section>
+
+    <!-- ================= SAMPLE ================= -->
+    <section class="screen" id="s-sample">
+      <div class="scroll">
+        <div class="hd rv"><button class="back tap" data-back><i data-i="chev-left"></i></button><div><h1 class="h1">Draw a sample</h1><p class="sub">Lot KR-26K-0402 · after cleaning</p></div></div>
+        <div class="card rv" style="padding:20px"><b style="font-size:16px">How to draw it</b>
+          <ol class="howto" style="list-style:none"><li><i>1</i>Take a scoop from five different bags, not all from the top of one.</li><li><i>2</i>Mix the five scoops together in the tray, then halve it down to a kilo.</li><li><i>3</i>Label the bag with the sample number below and tie the slip on tight.</li></ol></div>
+        <div class="rv" style="display:grid;grid-template-columns:1.7fr 1fr;gap:10px">
+          <div><p class="lab">Sample number</p><div class="inp">SM-26K-1182</div></div>
+          <div><p class="lab">Grams</p><div class="inp">1000</div></div>
+        </div>
+        <p class="lab rv">Which tests</p>
+        <div class="togs rv" id="tests"><button class="tog on tap">Germination</button><button class="tog on tap">Purity</button><button class="tog on tap">Moisture</button><button class="tog tap">Vigour</button></div>
+        <div class="mstrip rv" style="margin-top:18px"><span class="ibox"><i data-i="drop"></i></span><span><b>13.3%</b> <small style="font-size:13.5px">Moisture</small></span><span>goes to the lab<br>with the sample</span></div>
+        <button class="btn dark tap rv" style="margin-top:18px" id="sendLab">Send it to the lab</button>
+        <p class="caption rv">Print the slip and tie it to the bag before you walk it over.</p>
+      </div>
+    </section>
+
+    <!-- ================= STOPPAGE ================= -->
+    <section class="screen" id="s-stoppage">
+      <div class="scroll">
+        <div class="hd rv"><button class="back tap" data-back><i data-i="chev-left"></i></button><div><h1 class="h1">Log a stoppage</h1><p class="sub">Drier 2 · down since 13:51</p></div></div>
+        <div class="card rv" style="padding:18px 20px">
+          <p class="lab" style="margin:0">How long has it been down?</p>
+          <div class="stepper"><button class="circ tap" id="mMinus"><i data-i="minus"></i></button>
+            <div style="text-align:center;overflow:hidden"><span class="bign" id="mins">41</span><small style="display:block;font-size:13px;color:var(--mut);margin-top:2px">minutes, counted against today</small></div>
+            <button class="circ l tap" id="mPlus"><i data-i="plus"></i></button></div>
+        </div>
+        <h3 class="sec rv">What stopped it?</h3>
+        <div class="grid2 rv" id="reasons" style="gap:8px">
+          <button class="reason tap on"><i data-i="gear"></i><b>Belt or bearing</b></button>
+          <button class="reason tap"><i data-i="bolt"></i><b>Power cut</b></button>
+          <button class="reason tap"><i data-i="drop"></i><b>Seed too wet</b></button>
+          <button class="reason tap"><i data-i="hopper"></i><b>No seed at the hopper</b></button>
+          <button class="reason tap"><i data-i="bookmark"></i><b>Bags or tags ran out</b></button>
+          <button class="reason tap"><i data-i="clock"></i><b>Shift change</b></button>
+        </div>
+        <p class="lab rv">Anything to add</p>
+        <textarea class="rv" id="stopNote">Belt slipping on the feed side. Fitter has been called.</textarea>
+        <button class="btn dark tap rv" style="margin-top:14px" id="saveStop">Save the stoppage</button>
+        <p class="caption rv">Your plant manager sees this the moment you save.</p>
+      </div>
+    </section>
+
+    <!-- ================= PASSPORT ================= -->
+    <section class="screen" id="s-passport">
+      <div class="scroll">
+        <div class="hd rv"><button class="back tap" data-back><i data-i="chev-left"></i></button><div><h1 class="h1">KR-26K-0398</h1><p class="sub">Maize KH-114 · 512 bags</p></div></div>
+        <div class="rel rv"><span class="ibox"><i data-i="check"></i></span><span><b>Released and dispatched</b><small>Left on HR 38 7712 for Hisar depot</small></span></div>
+        <div class="grid3 q3 rv" style="margin-top:10px">
+          <div class="kpi"><small>Germination</small><b>91%</b><span>needs 60%</span></div>
+          <div class="kpi"><small>Purity</small><b>99.1%</b><span>needs 98%</span></div>
+          <div class="kpi"><small>Moisture</small><b>10.4%</b><span>needs under 12%</span></div>
+        </div>
+        <div class="card rv" style="margin-top:10px;padding:20px"><b style="font-size:16.5px;display:block;margin-bottom:18px">Where it has been</b>
+          <div class="tl ptl">
+            <div class="st d rv"><span class="dot"></span><span class="tx"><b>Source seed received</b><small>Foundation seed, tag FS-2026-11847</small><em>Anil Verma · 12 Jun</em></span></div>
+            <div class="st d rv"><span class="dot"></span><span class="tx"><b>Grower sown</b><small>Jaspal Sidhu, 4.2 acres, Nilokheri</small><em>Rekha, field officer · 28 Jun</em></span></div>
+            <div class="st d rv"><span class="dot"></span><span class="tx"><b>Field inspected twice</b><small>Both passed, isolation distance met</small><em>SCA inspector · 14 Aug</em></span></div>
+            <div class="st d rv"><span class="dot"></span><span class="tx"><b>Processed at Karnal</b><small>595 q in, 512 q out, recovery 86.1%</small><em>Suresh Kumar · 2 Nov</em></span></div>
+            <div class="st d rv"><span class="dot"></span><span class="tx"><b>Lab released</b><small>All three tests inside the standard</small><em>Meena, lab · 2 Nov</em></span></div>
+            <div class="st d rv"><span class="dot"></span><span class="tx"><b>Dispatched</b><small>Gate pass GP-4471 to Hisar depot</small><em>Suresh Kumar · 2 Nov</em></span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= WHERE ================= -->
+    <section class="screen notab" id="s-where">
+      <div class="scroll">
+        <div class="hd rv"><button class="back tap" data-back><i data-i="chev-left"></i></button><span class="sub" style="font-weight:600;margin:0">Step 4 of 4 done</span></div>
+        <h1 class="hbig rv" style="margin-top:12px">Where does this lot go?</h1>
+        <p class="lead rv" id="whereTx">KR-26K-0404 finished treatment and packaging. 320 bags. Pick one so the lot shows up in the right place.</p>
+        <div class="stack" style="margin-top:26px;gap:14px">
+          <button class="dest tap on rv" data-d="storage"><span class="ibox"><i data-i="archive"></i></span><span><b>Goes to storage</b><small>Bags go to a warehouse bay and wait. You pick the bay on the next screen.</small></span></button>
+          <button class="dest tap locked rv" data-d="dispatch"><span class="ibox"><i data-i="truck"></i></span><span><b>Goes to dispatch</b><small>Bags load onto a vehicle today. A draft dispatch opens for the plant manager.</small></span><span class="lk" id="lockIc"><i data-i="lock"></i></span></button>
+          <div class="warn rv" id="labWarn"><i data-i="warn"></i><span id="labTx">This lot is still waiting on its germination result, so dispatch stays locked until the lab releases it.</span></div>
+        </div>
+      </div>
+      <div class="foot"><button class="btn dark tap" id="whereGo"><span id="whereGoTx">Pick a bay</span></button></div>
+    </section>
+
+    <!-- ================= BAY ================= -->
+    <section class="screen" id="s-bay">
+      <div class="scroll">
+        <div class="hd rv"><button class="back tap" data-back><i data-i="chev-left"></i></button><div><h1 class="h1">Put it away</h1><p class="sub">KR-26K-0404 · 320 bags</p></div></div>
+        <h3 class="sec rv" style="margin-top:4px">Which bay has room?</h3>
+        <div class="grid2" id="bays" style="gap:9px">
+          <button class="bay tap rv" data-b="1" data-cap="130"><span class="top"><b>Bay 1</b><em class="r">4% free</em></span><div class="bar"><i class="r" style="width:96%"></i></div><small>3,120 bags in</small></button>
+          <button class="bay tap rv" data-b="2"><span class="top"><b>Bay 2</b><em>12% free</em></span><div class="bar"><i style="width:88%"></i></div><small>2,840 bags in</small></button>
+          <button class="bay tap on rv" data-b="3"><span class="top"><b>Bay 3</b><em>36% free</em></span><div class="bar"><i style="width:64%"></i></div><small>2,060 bags in</small></button>
+          <button class="bay tap rv" data-b="4"><span class="top"><b>Bay 4</b><em>29% free</em></span><div class="bar"><i style="width:71%"></i></div><small>2,290 bags in</small></button>
+          <button class="bay tap full rv" data-b="5" data-cap="0"><span class="top"><b>Bay 5</b><em>Full</em></span><div class="bar"><i style="width:100%"></i></div><small>full, nothing fits</small></button>
+          <button class="bay tap rv" data-b="6"><span class="top"><b>Bay 6</b><em>55% free</em></span><div class="bar"><i style="width:45%"></i></div><small>1,450 bags in</small></button>
+          <button class="bay tap rv" data-b="7"><span class="top"><b>Bay 7</b><em>67% free</em></span><div class="bar"><i style="width:33%"></i></div><small>1,070 bags in</small></button>
+          <button class="bay tap rv" data-b="8"><span class="top"><b>Bay 8</b><em>28% free</em></span><div class="bar"><i style="width:72%"></i></div><small>2,350 bags in</small></button>
+        </div>
+        <p class="lab rv">Note for the next shift</p>
+        <textarea class="rv" style="height:68px;text-align:center;padding-top:22px">Stacked on pallets, keep clear of the east wall.</textarea>
+        <div class="card check-list rv" style="margin-top:12px;background:#F5F5EF"><b style="font-size:15px;padding-left:26px">What happens when you save</b>
+          <p><i data-i="check"></i><span>The lot shows up in <span class="bayN">Bay 3</span> on the Storage page straight away.</span></p>
+          <p><i data-i="check"></i><span>The plant manager can send it to dispatch from there whenever a load is ready.</span></p>
+          <p><i data-i="check"></i><span>Beejwise files the storage entry to SATHI for you, no second form.</span></p></div>
+        <button class="btn dark tap rv" style="margin-top:14px;padding:0 8px 0 0" id="saveBay"><span style="margin-left:auto">Save into <span class="bayN">Bay 3</span></span><span style="width:34px;height:34px;border-radius:99px;background:rgba(255,255,255,.12);display:grid;place-items:center;margin-left:6px;margin-right:auto"><i data-i="arrow"></i></span></button>
+      </div>
+    </section>
+
+    <!-- ================= SENT / STORED (shared layout) ================= -->
+    <section class="screen notab" id="s-sent">
+      <div class="scroll" style="padding-bottom:170px">
+        <div class="hd rv"><button class="back tap" data-tab="today"><i data-i="chev-left"></i></button><span class="sub" style="font-weight:600;margin:0">Session closed</span></div>
+        <div class="done-hero rv">
+          <span class="badge pop" style="--d:250ms" id="dnIcon"><i data-i="truck"></i></span>
+          <h2 id="dnTitle">Sent to dispatch</h2>
+          <p id="dnTx">KR-26K-0404 is off your line. 320 bags, 26.6 t, waiting to load.</p>
+          <div class="grid3" id="dnStats"></div>
+        </div>
+        <div class="card rv" style="margin-top:12px;padding:20px"><b style="font-size:16.5px;display:block;margin-bottom:16px">What happens next</b><div class="tl" id="dnSteps"></div></div>
+      </div>
+      <div class="foot" style="bottom:26px"><button class="btn dark tap" data-tab="queue">Start the next truck</button><button class="btn white tap" style="margin-top:10px" data-tab="today">Go to today</button></div>
+    </section>
+
+    <!-- ================= ALERTS ================= -->
+    <section class="screen" id="s-alerts">
+      <div class="scroll">
+        <div class="rv" style="margin:2px 0 14px"><h1 class="h1">Alerts</h1><p class="sub" id="alSub">4 need you, 4 for information</p></div>
+        <div class="chips rv" data-filter="alList">
+          <button class="chip on tap" data-f="all">All <span id="cAll">8</span></button>
+          <button class="chip tap" data-f="need">Needs you <span id="cNeed">4</span></button>
+          <button class="chip tap" data-f="info">For info <span>4</span></button>
+        </div>
+        <div class="stack" id="alList">
+          <div class="alert rv" data-k="all need" data-al="finish"><div class="row"><span class="ibox l"><i data-i="check"></i></span><span><b>Lot 0404 is ready to finish</b><p>Treatment and packaging is done. Say where the 320 bags go.</p><time>2 minutes ago</time></span><i class="u" style="background:var(--lime2)"></i></div>
+            <button class="btn dark tap" data-go="where" data-lot="0404">Finish the session</button></div>
+          <div class="alert rv" data-k="all need" data-al="stop"><div class="row"><span class="ibox r"><i data-i="pause"></i></span><span><b>Drier 2 has been down 41 minutes</b><p>Today is already 58 minutes over the 30 minute limit.</p><time>14 minutes ago</time></span><i class="u" style="background:var(--red)"></i></div>
+            <button class="btn dark tap" data-go="stoppage">Log the reason</button></div>
+          <div class="alert rv" data-k="all need" data-al="sample"><div class="row"><span class="ibox a"><i data-i="flask"></i></span><span><b>Sample due for lot 0402</b><p>Draw it before cleaning finishes or the lot waits in the lab.</p><time>32 minutes ago</time></span><i class="u" style="background:#8A5300"></i></div>
+            <button class="btn lime tap" data-go="sample">Draw the sample</button></div>
+          <div class="alert rv" data-k="all need" data-al="truck"><div class="row"><span class="ibox r"><i data-i="truck"></i></span><span><b>Truck HR 26 9031 has waited 54 minutes</b><p>Paddy at 14.1%. It is the longest in the queue.</p><time>54 minutes ago</time></span><i class="u" style="background:var(--red)"></i></div>
+            <button class="btn lime tap" data-tab="queue">Open the queue</button></div>
+          <div class="alert rv" data-k="all info"><div class="row"><span class="ibox" style="color:var(--grn)"><i data-i="check"></i></span><span><b>Lot 0121 released by the lab</b><p>Germination 91%, purity 99.1%. Ready to dispatch.</p><time>1 hour ago</time></span></div></div>
+          <div class="alert rv" data-k="all info"><div class="row"><span class="ibox a"><i data-i="pause"></i></span><span><b>Lot 0377 put on hold</b><p>Germination came back at 58%, under the 60% standard.</p><time>5 hours ago</time></span></div></div>
+          <div class="alert rv" data-k="all info"><div class="row"><span class="ibox"><i data-i="doc"></i></span><span><b>Gate pass GP-4471 signed</b><p>HR 38 7712 left for Hisar depot with lot 0398.</p><time>6 hours ago</time></span></div></div>
+          <div class="alert rv" data-k="all info"><div class="row"><span class="ibox"><i data-i="user"></i></span><span><b>Shift A handed over to you</b><p>18 t on the line, 6 sessions open.</p><time>14:00</time></span></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= YOU ================= -->
+    <section class="screen" id="s-you">
+      <div class="scroll">
+        <h1 class="h1 rv" style="margin:2px 0 16px">Your profile</h1>
+        <div class="prof rv">
+          <div class="row" style="margin-bottom:16px"><span class="av">SK</span><span><b style="font-size:21px;font-weight:700;letter-spacing:-.02em">Suresh Kumar</b><small style="color:#C9C9BF;font-size:14px">Plant manager · <span class="plantN">Karnal</span></small></span></div>
+          <div class="kv">Employee ID<b><span id="empId">UXD-xxxx</span><button class="eye tap" id="eyeBtn"><i data-i="eye-off"></i></button></b></div>
+          <div class="kv">SATHI login<b>HR-KNL-0041</b></div>
+          <div class="kv">Shift<b>B, 14:00 to 22:00</b></div>
+        </div>
+        <div class="grid3 rv" style="margin-top:10px">
+          <div class="kpi" style="padding:14px"><b style="font-size:21px">96 t</b><span>processed this shift</span></div>
+          <div class="kpi" style="padding:14px"><b style="font-size:21px" id="sessDone">11</b><span>sessions finished</span></div>
+          <div class="kpi" style="padding:14px"><b style="font-size:21px;color:var(--red)"><span id="dtMin2">58</span> min</b><span>downtime logged</span></div>
+        </div>
+        <div class="card rv" style="margin-top:10px;padding:8px 18px">
+          <div class="setting"><span class="ibox"><i data-i="translate"></i></span><span><b>Hindi on the app</b><small>Labels and buttons in Hindi</small></span><button class="sw" data-sw="hindi"></button></div>
+          <div class="setting"><span class="ibox"><i data-i="bell"></i></span><span><b>Buzz for alerts</b><small>Vibrates even on silent</small></span><button class="sw on" data-sw="buzz"></button></div>
+          <div class="setting"><span class="ibox"><i data-i="filter"></i></span><span><b>Bigger text</b><small>Easier to read on the floor</small></span><button class="sw" data-sw="big"></button></div>
+          <button class="setting tap" style="width:100%;text-align:left" id="syncBtn"><span class="ibox"><i data-i="download"></i></span><span><b>Offline records</b><small id="syncTx">2 waiting to sync</small></span><span class="chev"><i data-i="chev-right"></i></span></button>
+          <div class="setting"><span class="ibox"><i data-i="help"></i></span><span><b>Help and shift rules</b><small>What to do when a line stops</small></span><span class="chev"><i data-i="chev-right"></i></span></div>
+        </div>
+        <button class="btn white tap rv" style="margin-top:12px;gap:8px" id="endShift"><i data-i="logout"></i>End my shift</button>
+        <p class="ver rv">Beejwise 3.0 · Everything synced 11 minutes ago</p>
+      </div>
+    </section>
+
+    <!-- ================= TAB BAR ================= -->
+    <nav class="tabbar hide" id="tabbar">
+      <span class="tbpill" id="tbpill"></span>
+      <button class="tab" data-tab="today"><span class="ti"><i data-i="home"></i></span><span class="tl-l">Today</span></button>
+      <button class="tab" data-tab="queue"><span class="ti"><i data-i="truck"></i></span><span class="tl-l">Queue</span></button>
+      <button class="tab scan" data-tab="scan"><span class="ti"><i data-i="scan"></i></span><span class="tl-l">Scan</span></button>
+      <button class="tab" data-tab="alerts"><span class="ti"><i data-i="bell"></i></span><span class="tl-l">Alerts</span><span class="bdg" id="badge">4</span></button>
+      <button class="tab" data-tab="you"><span class="ti"><i data-i="user"></i></span><span class="tl-l">You</span></button>
+    </nav>
+
+    <!-- ================= SHEETS ================= -->
+    <div class="scrim" id="scrim"></div>
+    <div class="sheet" id="sh-add">
+      <div class="grab"><i></i></div>
+      <div class="row" style="margin-top:8px;align-items:flex-start"><div><h2 class="h1">Add a session</h2><p class="sub">For a truck that drove in without a slip.</p></div><button class="xbtn tap" data-close><i data-i="x"></i></button></div>
+      <p class="lab">Lot number</p>
+      <div class="field tap" id="fLot"><span class="ph">Tap to type or use next in line</span><button class="nx" id="nextLine">next in line</button></div>
+      <div style="display:grid;grid-template-columns:1.45fr 1fr;gap:10px">
+        <div><p class="lab">Truck</p><div class="field tap" id="fTruck"><span class="ph">HR 00 0000</span></div></div>
+        <div><p class="lab">Bags</p><div class="field bags"><button class="mini tap" id="bMinus"><i data-i="minus"></i></button><span id="bags" style="display:inline-block">232</span><button class="mini l tap" id="bPlus"><i data-i="plus"></i></button></div></div>
+      </div>
+      <p class="lab">Crop and variety</p>
+      <div id="ddWrap"><div class="field tap" id="fCrop"><span class="ph" id="cropTx">Choose the crop</span><span class="chev-r" style="margin-left:auto"><i data-i="chev-down"></i></span></div>
+        <div class="crop-list" id="cropList"><div>
+          <button data-c="Paddy PR-126">Paddy PR-126<small>14% band</small></button><button data-c="Maize HQPM-1">Maize HQPM-1<small>14% band</small></button>
+          <button data-c="Bajra HHB-299">Bajra HHB-299<small>12% band</small></button><button data-c="Cotton RCH-659">Cotton RCH-659<small>10% band</small></button>
+        </div></div></div>
+      <div class="mbox"><div class="row"><span style="width:28px;display:grid;place-items:center"><i data-i="drop"></i></span><span><b style="font-size:15.5px">Moisture at the gate</b><small class="band" id="band">Inside the band, straight to the gravity table.</small></span></div>
+        <div class="stepper" style="margin-top:6px"><button class="circ tap" style="box-shadow:none" id="moMinus"><i data-i="minus"></i></button><span class="bign" id="mo" style="margin-right:auto;margin-left:16px">13.5%</span><button class="circ l tap" id="moPlus"><i data-i="plus"></i></button></div></div>
+      <button class="btn lime tap" style="margin-top:16px" id="logStart">Log it and start</button>
+    </div>
+    <div class="sheet" id="sh-end">
+      <div class="grab"><i></i></div>
+      <div class="row" style="margin-top:8px;align-items:flex-start"><div><h2 class="h1">End shift B?</h2><p class="sub">Shift C picks up what is still running.</p></div><button class="xbtn tap" data-close><i data-i="x"></i></button></div>
+      <div class="grid3" style="margin-top:18px"><div class="kpi" style="padding:13px"><small>Processed</small><b style="font-size:20px">96 t</b></div><div class="kpi" style="padding:13px"><small>Still running</small><b style="font-size:20px" id="endRun">4</b></div><div class="kpi r" style="padding:13px"><small style="color:var(--red)">Downtime</small><b style="font-size:20px"><span id="dtMin3">58</span> min</b></div></div>
+      <div class="note" style="margin-top:12px"><i data-i="info"></i><span>Your handover note goes to Shift C and the plant manager. Offline records sync first.</span></div>
+      <button class="btn dark tap" style="margin-top:16px" id="confirmEnd">End and hand over</button>
+      <button class="btn white tap" style="margin-top:10px" data-close>Keep working</button>
+    </div>
+
+    <div class="toast" id="toast"><span class="tk"><i data-i="check"></i></span><span id="toastTx">Saved</span></div>
+    <div class="homebar"></div>
+  </div></div></div>
+</div>
+
+<script>
+(()=>{
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const E='cubic-bezier(.32,.72,0,1)', OUT='cubic-bezier(.22,1,.36,1)', SNAP='cubic-bezier(.34,1.56,.64,1)';
+
+/* ---------- icons ---------- */
+const P={
+home:'<path d="M3.5 10.2 12 3.5l8.5 6.7V19a1.5 1.5 0 0 1-1.5 1.5h-4.2v-6h-5.6v6H5A1.5 1.5 0 0 1 3.5 19z"/>',
+truck:'<path d="M2.5 6.5h11v9.5h-11z"/><path d="M13.5 9.5h4l3 3.2v3.3h-7"/><circle cx="6.5" cy="17.5" r="1.8"/><circle cx="17" cy="17.5" r="1.8"/>',
+scan:'<path d="M4 8.5V6.5A2.5 2.5 0 0 1 6.5 4h2M15.5 4h2A2.5 2.5 0 0 1 20 6.5v2M20 15.5v2a2.5 2.5 0 0 1-2.5 2.5h-2M8.5 20h-2A2.5 2.5 0 0 1 4 17.5v-2M7.5 12h9"/>',
+bell:'<path d="M6 9a6 6 0 1 1 12 0c0 6.5 2.5 8.5 2.5 8.5h-17S6 15.5 6 9"/><path d="M10.2 20.5a2 2 0 0 0 3.6 0"/>',
+user:'<circle cx="12" cy="8" r="4"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/>',
+'chev-left':'<path d="M15 18l-6-6 6-6"/>','chev-right':'<path d="M9 18l6-6-6-6"/>','chev-down':'<path d="M6 9l6 6 6-6"/>',
+check:'<path d="M20 6.5 9.5 17 4 11.5"/>',pause:'<path d="M9.5 5.5v13M14.5 5.5v13"/>',
+flask:'<path d="M9 3.5h6M10 3.5v6l-5.4 9A1.6 1.6 0 0 0 6 21h12a1.6 1.6 0 0 0 1.4-2.5l-5.4-9v-6"/><path d="M7.5 15.5h9"/>',
+doc:'<path d="M14 3.5H6.5a1 1 0 0 0-1 1v15a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1V8z"/><path d="M14 3.5V8h4.5"/>',
+laptop:'<rect x="4.5" y="5.5" width="15" height="10" rx="1.5"/><path d="M2.5 19h19"/>',
+filter:'<path d="M4 7h16M7 12h10M10 17h4"/>',plus:'<path d="M12 5v14M5 12h14"/>',minus:'<path d="M5 12h14"/>',x:'<path d="M18 6 6 18M6 6l12 12"/>',
+drop:'<path d="M12 3.5s6 6.4 6 10.8a6 6 0 0 1-12 0C6 9.9 12 3.5 12 3.5z"/>',
+gear:'<circle cx="12" cy="12" r="3"/><path d="M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M5.5 18.5l1.7-1.7M16.8 7.2l1.7-1.7"/><circle cx="12" cy="12" r="6.6"/>',
+bolt:'<path d="M13 2.5 4.5 13.5H11l-1 8 8.5-11H12z"/>',hopper:'<rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17"/>',
+bookmark:'<path d="M6.5 3.5h11v17l-5.5-4-5.5 4z"/>',clock:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+info:'<circle cx="12" cy="12" r="8.5"/><path d="M12 11v5M12 8h.01"/>',warn:'<path d="M12 3.5 2.5 20h19z"/><path d="M12 10v4.5M12 17.3h.01"/>',
+archive:'<rect x="3" y="4" width="18" height="4.5" rx="1"/><path d="M4.5 8.5v10A1.5 1.5 0 0 0 6 20h12a1.5 1.5 0 0 0 1.5-1.5v-10M10 12.5h4"/>',
+play:'<path d="M7.5 5.5v13l11-6.5z"/>',lock:'<rect x="5.5" y="10.5" width="13" height="10" rx="2"/><path d="M8.5 10.5V7.5a3.5 3.5 0 0 1 7 0v3"/>',
+'eye-off':'<path d="M3 3l18 18M10.6 6.1A9.8 9.8 0 0 1 12 6c6 0 9.5 6 9.5 6a17 17 0 0 1-2.6 3.3M6.6 6.6A17 17 0 0 0 2.5 12S6 18 12 18a9.4 9.4 0 0 0 4.4-1.1M9.9 9.9a3 3 0 0 0 4.2 4.2"/>',
+eye:'<path d="M2.5 12S6 6 12 6s9.5 6 9.5 6-3.5 6-9.5 6S2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/>',
+translate:'<path d="M4 5.5h8M8 3.5v2M5.5 9.5c1.4 2.6 3.6 4.4 6.5 5.5M10.5 5.5c-1 4-3.6 6.8-6.5 8M13 20.5l4-9 4 9M14.4 17.5h5.2"/>',
+download:'<path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/>',help:'<circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.3a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1.1.9-1.1 1.7M12 16.6h.01"/>',
+logout:'<path d="M14 4.5h3.5a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H14M10 8l-4 4 4 4M6 12h10"/>',arrow:'<path d="M5 12h14M13 6l6 6-6 6"/>'
+};
+const ico=n=>`<svg class="ic" viewBox="0 0 24 24">${P[n]||''}</svg>`;
+const paintIcons=(r=document)=>$$('i[data-i]',r).forEach(i=>{i.outerHTML=ico(i.dataset.i)});
+paintIcons();
+
+/* ---------- device scale ---------- */
+const vp=$('#vp'), dev=$('#device'); let scale=1;
+function fit(){
+  const mob=innerWidth<=520;
+  if(mob){scale=Math.min(innerWidth/390,innerHeight/844);dev.style.setProperty('--s',scale);dev.style.width='390px';dev.style.height='844px';}
+  else{dev.style.width='';dev.style.height='';scale=Math.min(1,(innerHeight-40)/868);dev.style.setProperty('--s',scale);}
+}
+fit();addEventListener('resize',fit);
+
+/* ---------- state ---------- */
+const S=id=>document.getElementById('s-'+id);
+const TABS=['today','queue','scan','alerts','you'];
+const state={plant:'Karnal',phone:'9811044712',code:'',lab:false,dest:'storage',bay:3,lot:'0404',done:{},bags:232,mo:13.5,mins:41,crop:'',lotNo:'',truck:'',hindi:false};
+let stack=['splash'], curTab='today', busy=false, sheetOpen=null;
+$$('.screen').forEach(s=>{const d=document.createElement('div');d.className='dim';s.appendChild(d)});
+
+const LOTS={
+ '0404':{id:'KR-26K-0404',crop:'Maize',truck:'HR 55 1188',t:32,m:17.8,rec:'83.1%',bags:'268',total:320,stage:3,times:['14:02','15:10','16:40','Now']},
+ '0402':{id:'KR-26K-0402',crop:'Maize',truck:'HR 32 4052',t:28,m:13.3,rec:'84.0%',bags:'—',total:280,stage:2,times:['12:44','13:31','Now','']},
+ '0399':{id:'KR-26K-0399',crop:'Paddy',truck:'HR 19 2277',t:26,m:14.6,rec:'—',bags:'—',total:260,stage:1,times:['13:40','Now','','']},
+ '0396':{id:'KR-26K-0396',crop:'Cotton',truck:'PB 08 4411',t:18,m:9.2,rec:'—',bags:'—',total:180,stage:0,times:['Now','','','']},
+ '0406':{id:'KR-26K-0406',crop:'Paddy',truck:'HR 26 9031',t:24,m:14.1,rec:'—',bags:'—',total:240,stage:0,times:['Now','','','']},
+ '0407':{id:'KR-26K-0407',crop:'Maize',truck:'PB 11 7740',t:31,m:18.6,rec:'—',bags:'—',total:310,stage:0,times:['Now','','','']},
+ '0408':{id:'KR-26K-0408',crop:'Cotton',truck:'HR 44 2210',t:19,m:9.4,rec:'—',bags:'—',total:190,stage:0,times:['Now','','','']}
+};
+const STEPS=[
+ {n:'Intake',d:l=>`Weighed in at ${l.t.toFixed(1)} t, ${l.m}% moisture`,c:l=>l.m>14?`Weighing in now, ${l.m}% is above the band`:'Weighing in at the gate now'},
+ {n:'Gravity table',d:()=>'Light seed taken out, 1.8 t removed',c:()=>'On the gravity table now'},
+ {n:'Cleaning and grading',d:()=>'Graded to 6.5 mm, sample drawn',c:()=>'Grading now, sample due before it ends'},
+ {n:'Treatment and packaging',d:l=>`All ${l.total} bags packed`,c:l=>`Running now, ${l.bags==='—'?0:l.bags} of ${l.total} bags done`}
+];
+
+/* ---------- motion helpers ---------- */
+const anim=(el,kf,o={})=>el.animate(kf,Object.assign({duration:540,easing:E,fill:'both'},o)).finished;
+const clear=(...els)=>els.forEach(e=>{if(!e)return;e.getAnimations().forEach(a=>a.cancel());e.style.zIndex='';e.style.transform='';e.style.opacity=''});
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+function enter(el,base=80){$$('.rv,.pop',el).forEach((n,i)=>{if(!n.classList.contains('pop'))n.style.setProperty('--d',(base+i*42)+'ms')});el.classList.remove('in');void el.offsetWidth;el.classList.add('in')}
+function tick(el,val){el.textContent=val;el.animate([{transform:'translateY(45%)',opacity:0,filter:'blur(3px)'},{transform:'none',opacity:1,filter:'blur(0)'}],{duration:380,easing:OUT})}
+function shake(el){el.animate([{transform:'translateX(0)'},{transform:'translateX(-8px)'},{transform:'translateX(7px)'},{transform:'translateX(-4px)'},{transform:'translateX(2px)'},{transform:'none'}],{duration:440,easing:'cubic-bezier(.36,.07,.19,.97)'})}
+function countUp(el,to,dur=1000){const s=performance.now();const f=t=>{const p=Math.min(1,(t-s)/dur),e=1-Math.pow(1-p,4);el.textContent=Math.round(to*e);if(p<1)requestAnimationFrame(f)};requestAnimationFrame(f)}
+let toastT;
+async function toast(msg){const t=$('#toast');$('#toastTx').textContent=msg;clearTimeout(toastT);t.getAnimations().forEach(a=>a.cancel());
+  t.animate([{transform:'translate(-50%,-140%) scale(.85)',opacity:.4},{transform:'translate(-50%,0) scale(1)',opacity:1}],{duration:620,easing:SNAP,fill:'forwards'});
+  toastT=setTimeout(()=>t.animate([{transform:'translate(-50%,0) scale(1)',opacity:1},{transform:'translate(-50%,-140%) scale(.9)',opacity:.4}],{duration:460,easing:E,fill:'forwards'}),2300)}
+
+/* ---------- chrome ---------- */
+const NOTAB=id=>S(id).classList.contains('notab');
+const PARENT_TAB={sessions:'today',detail:null,sample:null,stoppage:null,passport:null,bay:null};
+function chrome(id){
+  vp.classList.toggle('dark',S(id).dataset.theme==='dark');
+  $('#tabbar').classList.toggle('hide',NOTAB(id));
+  if(TABS.includes(id))curTab=id;
+  movePill();
+  panel(id);
+}
+function movePill(){
+  const tb=$('#tabbar'), btn=$(`.tab[data-tab="${curTab}"]`), pill=$('#tbpill');
+  $$('.tab',tb).forEach(t=>t.classList.toggle('act',t===btn));
+  if(curTab==='scan'){pill.style.opacity=0;return}
+  pill.style.opacity=1;
+  const x=btn.offsetLeft+btn.offsetWidth/2-19; pill.style.transform=`translateX(${x}px)`;
+}
+
+/* ---------- navigation ---------- */
+const cur=()=>stack[stack.length-1];
+async function push(id,arg){
+  if(busy||id===cur())return; busy=true;
+  const a=S(cur()), b=S(id); prep(id,arg);
+  b.classList.add('on'); const sc=$('.scroll',b); if(sc)sc.scrollTop=0;
+  a.style.zIndex=1;b.style.zIndex=2; chrome(id); enter(b,120);
+  await Promise.all([anim(b,[{transform:'translateX(100%)'},{transform:'translateX(0)'}]),anim(a,[{transform:'translateX(0)'},{transform:'translateX(-28%)'}]),anim($('.dim',a),[{opacity:0},{opacity:1}])]);
+  a.classList.remove('on');clear(a,b,$('.dim',a));stack.push(id);busy=false;after(id);
+}
+async function pop(){
+  if(cur()==='sent'){tabGo('today');return}
+  if(busy||stack.length<2)return; busy=true;
+  const a=S(cur()), bid=stack[stack.length-2], b=S(bid);
+  b.classList.add('on');a.style.zIndex=2;b.style.zIndex=1; chrome(bid); prep(bid,null,true);
+  await Promise.all([anim(a,[{transform:'translateX(0)'},{transform:'translateX(100%)'}],{duration:480}),anim(b,[{transform:'translateX(-28%)'},{transform:'translateX(0)'}],{duration:480}),anim($('.dim',b),[{opacity:1},{opacity:0}],{duration:480})]);
+  a.classList.remove('on');clear(a,b,$('.dim',b));stack.pop();busy=false;
+}
+async function fade(id,newStack,arg,opts={}){
+  if(busy)return; busy=true;
+  const a=S(cur()), b=S(id); prep(id,arg);
+  if(a!==b){b.classList.add('on');a.style.zIndex=1;b.style.zIndex=2}
+  const sc=$('.scroll',b); if(sc)sc.scrollTop=0;
+  chrome(id); enter(b,opts.base??60);
+  const big=opts.big;
+  const p=[anim(b,[{opacity:0,transform:big?'scale(1.06)':'translateY(10px) scale(.99)'},{opacity:1,transform:'none'}],{duration:big?700:420,easing:OUT})];
+  if(a!==b)p.push(anim(a,[{opacity:1,transform:'none'},{opacity:0,transform:big?'scale(.94)':'scale(.985)'}],{duration:big?500:260,easing:OUT}));
+  await Promise.all(p);
+  if(a!==b)a.classList.remove('on');clear(a,b);stack=newStack||[id];busy=false;after(id);
+}
+const tabGo=id=>{ if(id===cur()&&stack.length===1){const sc=$('.scroll',S(id));sc&&sc.scrollTo({top:0,behavior:'smooth'});return} fade(id,[id]) };
+
+/* ---------- swipe back ---------- */
+let sw=null;
+vp.addEventListener('pointerdown',e=>{
+  const r=vp.getBoundingClientRect(), x=(e.clientX-r.left)/scale;
+  if(x>22||stack.length<2||busy||sheetOpen||cur()==='sent')return;
+  sw={x0:e.clientX,t0:performance.now(),a:S(cur()),b:S(stack[stack.length-2]),dx:0,id:e.pointerId,live:false};
+});
+vp.addEventListener('pointermove',e=>{if(!sw)return;sw.dx=Math.max(0,(e.clientX-sw.x0)/scale);
+  if(!sw.live){if(sw.dx<8)return;sw.live=true;sw.b.classList.add('on');sw.a.style.zIndex=2;sw.b.style.zIndex=1;vp.setPointerCapture(sw.id);sw.t0=performance.now()}
+  const p=Math.min(1,sw.dx/390);
+  sw.a.style.transform=`translateX(${sw.dx}px)`;sw.b.style.transform=`translateX(${-28*(1-p)}%)`;$('.dim',sw.b).style.opacity=1-p});
+const swEnd=async e=>{if(!sw)return;const s=sw;sw=null;if(!s.live)return;busy=true;
+  const v=s.dx/((performance.now()-s.t0)||1), p=s.dx/390, done=p>.35||v>.6;
+  const ka=s.a.style.transform, kb=s.b.style.transform, kd=$('.dim',s.b).style.opacity||1;
+  s.a.style.transform='';s.b.style.transform='';$('.dim',s.b).style.opacity='';
+  const d=done?380:320;
+  if(done)chrome(stack[stack.length-2]);
+  await Promise.all([anim(s.a,[{transform:ka||'none'},{transform:done?'translateX(100%)':'translateX(0)'}],{duration:d}),anim(s.b,[{transform:kb||'translateX(-28%)'},{transform:done?'translateX(0)':'translateX(-28%)'}],{duration:d}),anim($('.dim',s.b),[{opacity:kd},{opacity:done?0:1}],{duration:d})]);
+  if(done){s.a.classList.remove('on');stack.pop()}else{s.b.classList.remove('on')}
+  clear(s.a,s.b,$('.dim',s.b));busy=false;};
+vp.addEventListener('pointerup',swEnd);vp.addEventListener('pointercancel',swEnd);
+
+/* ---------- delegated taps ---------- */
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-back],[data-go],[data-tab],[data-close],[data-jump]'); if(!t)return;
+  if(t.hasAttribute('data-close')){closeSheet();return}
+  if(t.hasAttribute('data-back')){pop();return}
+  if(t.dataset.tab){ if(sheetOpen)return; tabGo(t.dataset.tab);return}
+  if(t.dataset.go){ const id=t.dataset.go, lot=t.dataset.lot;
+    if(id==='where'&&lot)state.lot=lot;
+    push(id,lot); return}
+  if(t.dataset.jump){jump(t.dataset.jump)}
+});
+addEventListener('keydown',e=>{if(e.key==='Escape'){sheetOpen?closeSheet():pop()}});
+
+/* ---------- per-screen prep / after ---------- */
+const timers={};
+function prep(id,arg,back){
+  if(id==='detail'&&!back){state.dlot=arg||state.dlot||'0404';renderDetail(false)}
+  if(id==='detail'&&back)renderDetail(false);
+  if(id==='where'&&!back)prepWhere();
+  if(id==='sent'&&!back)renderDone();
+  if(id==='scan')resetScan();
+  if(id==='otp'&&!back)startOtp();
+  if(['today','alerts','sessions'].includes(id))refreshToday();
+  if(id==='splash')S('splash').classList.remove('go');
+}
+function after(id){
+  if(id==='splash')runSplash();
+  if(id==='today'){$$('[data-count]',S('today')).forEach(n=>countUp(n,+n.textContent))}
+  if(id==='where')labTimer();
+  if(id==='sent')runDone();
+}
+
+/* ---------- splash ---------- */
+function runSplash(){const s=S('splash');s.classList.remove('go');void s.offsetWidth;s.classList.add('go');clearTimeout(timers.sp);timers.sp=setTimeout(()=>{if(cur()==='splash')fade('mobile',['mobile'],null,{big:true,base:200})},2700)}
+S('splash').addEventListener('click',()=>{clearTimeout(timers.sp);fade('mobile',['mobile'],null,{big:true,base:200})});
+
+/* ---------- keypads ---------- */
+$$('.keypad').forEach(k=>{k.innerHTML=[1,2,3,4,5,6,7,8,9,'',0,'del'].map(n=>n===''?'<span></span>':`<button class="key${n==='del'?' ghost':''}" data-k="${n}">${n==='del'?'<svg class="ic" viewBox="0 0 24 24" style="width:26px"><path d="M8.5 5.5h11a1.5 1.5 0 0 1 1.5 1.5v10a1.5 1.5 0 0 1-1.5 1.5h-11L3 12z"/><path d="M11.5 9.5l5 5M16.5 9.5l-5 5"/></svg>':n}</button>`).join('')});
+const fmtPhone=p=>p.length>5?p.slice(0,5)+' '+p.slice(5):p;
+$('[data-pad="phone"]').addEventListener('click',e=>{const k=e.target.closest('.key');if(!k)return;
+  if(k.dataset.k==='del')state.phone=state.phone.slice(0,-1);else if(state.phone.length<10)state.phone+=k.dataset.k;else{shake($('#phoneField'));return}
+  $('#phoneNum').textContent=fmtPhone(state.phone);});
+$('#sendCode').addEventListener('click',()=>{if(state.phone.length<10){shake($('#phoneField'));return}$('#sentTo').textContent='+91 '+fmtPhone(state.phone);push('otp')});
+function paintOtp(lastNew){const boxes=$$('#otp div');boxes.forEach((b,i)=>{const ch=state.code[i];b.className=(ch?'':'empty')+(i===state.code.length?' cur':'');b.innerHTML=ch?(i===state.code.length-1&&lastNew?`<span>${ch}</span>`:ch):''})}
+function startOtp(){state.code='';paintOtp();let s=24;$('#resendBtn').classList.remove('en');clearInterval(timers.otp);
+  $('#resendTx').innerHTML='Resend in <b>24 seconds</b>';
+  timers.otp=setInterval(()=>{s--;if(s<=0){clearInterval(timers.otp);$('#resendTx').innerHTML='Did not get it?';$('#resendBtn').classList.add('en');return}$('#resendTx').innerHTML=`Resend in <b>${s} second${s>1?'s':''}</b>`},1000)}
+$('#resendBtn').addEventListener('click',()=>{if($('#resendBtn').classList.contains('en')){startOtp();toast('New code sent')}});
+async function verify(){if(state.code.length<4){shake($('#otp'));return}
+  const boxes=$$('#otp div');for(const [i,b] of boxes.entries()){await wait(70);b.classList.add('ok');b.animate([{transform:'scale(1)'},{transform:'scale(1.08)'},{transform:'scale(1)'}],{duration:380,easing:SNAP})}
+  await wait(380);clearInterval(timers.otp);push('plant')}
+$('[data-pad="otp"]').addEventListener('click',e=>{const k=e.target.closest('.key');if(!k||busy)return;
+  if(k.dataset.k==='del'){state.code=state.code.slice(0,-1);paintOtp()}else if(state.code.length<4){state.code+=k.dataset.k;paintOtp(true);if(state.code.length===4)setTimeout(verify,250)}});
+$('#checkCode').addEventListener('click',verify);
+
+/* ---------- plant ---------- */
+$('#plants').addEventListener('click',e=>{const p=e.target.closest('.plant');if(!p)return;$$('.plant').forEach(x=>x.classList.toggle('sel',x===p));state.plant=p.dataset.p});
+$('#startShift').addEventListener('click',()=>{$('#plantName').textContent=state.plant;$$('.plantN').forEach(n=>n.textContent=state.plant);fade('today',['today'],null,{big:true,base:160})});
+
+/* ---------- today ---------- */
+function refreshToday(){
+  const d=state.done, open=['finish','stop','sample'].filter(k=>!d[k]);
+  $$('#needs [data-row]').forEach(r=>r.classList.toggle('hidden',!!d[r.dataset.row]));
+  $('#allClear').classList.toggle('hidden',open.length>0);
+  const active=d.finish?3:4;$('#activeCnt').textContent=active;$('#endRun').textContent=active;
+  $('#heroTx').textContent=d.finish?'All three are running normally. Nothing is waiting on you to finish.':'One is waiting on you to finish it. The other three are running normally.';
+  $('#linesTx').textContent=d.finish?'Three lines':'Four lines';
+  $$('[data-filter] .chip').forEach(c=>c.classList.toggle('on',c.dataset.f==='all'));
+  $$('#sessList > *').forEach(n=>{const g=n.dataset.lot==='0404'&&!!d.finish;n.dataset.gone=g?'1':'';n.classList.toggle('hidden',g)});
+  $$('#alList > *').forEach(n=>{const g=!!(n.dataset.al&&d[n.dataset.al]);n.dataset.gone=g?'1':'';n.classList.toggle('hidden',g)});
+  const need=4-['finish','stop','sample'].filter(k=>d[k]).length;
+  const bd=$('#badge');if(bd.textContent!=need){bd.textContent=need;bd.animate([{transform:'scale(1.5)'},{transform:'scale(1)'}],{duration:500,easing:SNAP})}
+  $('#cNeed').textContent=need;$('#cAll').textContent=need+4;$('#alSub').textContent=`${need} need you, 4 for information`;
+}
+
+/* ---------- filters with FLIP ---------- */
+async function flip(list,show){
+  const items=[...list.children];
+  const leaving=items.filter(n=>!n.classList.contains('hidden')&&!n.dataset.gone&&!show(n));
+  await Promise.all(leaving.map(n=>n.animate([{opacity:1,transform:'scale(1)'},{opacity:0,transform:'scale(.95)'}],{duration:200,easing:OUT,fill:'forwards'}).finished));
+  const vis=items.filter(n=>!n.classList.contains('hidden')&&!leaving.includes(n));
+  const first=new Map(vis.map(n=>[n,n.getBoundingClientRect().top]));
+  items.forEach(n=>{n.getAnimations().forEach(a=>a.cancel());n.classList.toggle('hidden',!show(n)||!!n.dataset.gone)});
+  let j=0;items.forEach(n=>{if(n.classList.contains('hidden'))return;
+    if(first.has(n)){const dy=(first.get(n)-n.getBoundingClientRect().top)/scale;if(dy)n.animate([{transform:`translateY(${dy}px)`},{transform:'none'}],{duration:560,easing:E})}
+    else n.animate([{opacity:0,transform:'translateY(16px) scale(.97)'},{opacity:1,transform:'none'}],{duration:560,delay:j++*50,easing:OUT,fill:'backwards'})});
+}
+$$('[data-filter]').forEach(c=>c.addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;$$('.chip',c).forEach(x=>x.classList.toggle('on',x===b));
+  const list=$('#'+c.dataset.filter), f=b.dataset.f;
+  [...list.children].forEach(n=>{n.dataset.gone=(n.dataset.al&&state.done[n.dataset.al])||(n.dataset.lot==='0404'&&list.id==='sessList'&&state.done.finish)?'1':''});
+  flip(list,n=>n.dataset.k.split(' ').includes(f))}));
+
+/* ---------- queue ---------- */
+let sortLong=true;
+$('#qSort').addEventListener('click',()=>{sortLong=!sortLong;const list=$('#qList');const items=[...list.children];
+  const first=new Map(items.map(n=>[n,n.getBoundingClientRect().top]));
+  items.sort((a,b)=>sortLong?b.dataset.w-a.dataset.w:a.dataset.w-b.dataset.w).forEach(n=>list.appendChild(n));
+  items.forEach((n,i)=>{const dy=(first.get(n)-n.getBoundingClientRect().top)/scale;n.animate([{transform:`translateY(${dy}px)`},{transform:'none'}],{duration:640,easing:E,delay:i*20})});
+  $('#qSub').textContent=sortLong?'3 trucks waiting, longest 54 min':'3 trucks waiting, newest first';
+  toast(sortLong?'Longest wait first':'Newest first')});
+
+/* ---------- sheets ---------- */
+async function openSheet(id){if(busy||sheetOpen)return;busy=true;const sh=$('#'+id),sc=$('#scrim'),under=S(cur());sheetOpen=sh;sh.classList.add('open');sc.classList.add('on');
+  under.style.borderRadius='24px';under.style.overflow='hidden';
+  await Promise.all([anim(sh,[{transform:'translateY(105%)'},{transform:'translateY(0)'}],{duration:620}),anim(sc,[{opacity:0},{opacity:1}],{duration:500}),anim(under,[{transform:'none'},{transform:'scale(.93) translateY(10px)'}],{duration:620}),anim($('#tabbar'),[{transform:'none'},{transform:'translateY(110%)'}],{duration:500})]);
+  busy=false;}
+async function closeSheet(fromY){if(!sheetOpen||busy)return;busy=true;const sh=sheetOpen,sc=$('#scrim'),under=S(cur());
+  const y0=fromY!=null?`translateY(${fromY}px)`:'translateY(0)';sh.getAnimations().forEach(a=>a.cancel());sh.style.transform='';
+  const tb=$('#tabbar');const tbHidden=tb.classList.contains('hide');
+  await Promise.all([anim(sh,[{transform:y0},{transform:'translateY(105%)'}],{duration:480}),anim(sc,[{opacity:1},{opacity:0}],{duration:420}),anim(under,[{transform:'scale(.93) translateY(10px)'},{transform:'none'}],{duration:520}),anim(tb,[{transform:tbHidden?'translateY(110%)':'translateY(110%)'},{transform:tbHidden?'translateY(110%)':'none'}],{duration:520})]);
+  clear(sh,sc,under,tb);under.style.borderRadius='';under.style.overflow='';sc.classList.remove('on');sh.classList.remove('open');sheetOpen=null;busy=false;}
+$('#scrim').addEventListener('click',()=>closeSheet());
+$$('.sheet .grab').forEach(g=>{let y0=null,t0=0,dy=0;const sh=g.parentElement;
+  g.addEventListener('pointerdown',e=>{if(busy)return;y0=e.clientY;t0=performance.now();dy=0;g.setPointerCapture(e.pointerId);sh.getAnimations().forEach(a=>a.cancel());sh.style.transform='translateY(0)'});
+  g.addEventListener('pointermove',e=>{if(y0==null)return;dy=(e.clientY-y0)/scale;dy=dy<0?dy/4:dy;sh.style.transform=`translateY(${dy}px)`});
+  const up=()=>{if(y0==null)return;y0=null;const v=dy/(performance.now()-t0);if(dy>120||v>.5)closeSheet(dy);else{const k=sh.style.transform;sh.animate([{transform:k},{transform:'translateY(0)'}],{duration:500,easing:SNAP}).finished.then(()=>sh.style.transform='translateY(0)')}};
+  g.addEventListener('pointerup',up);g.addEventListener('pointercancel',up)});
+
+/* add-session sheet */
+function resetAdd(){Object.assign(state,{bags:232,mo:13.5,crop:'',lotNo:'',truck:''});$('#bags').textContent=232;$('#mo').textContent='13.5%';
+  $('#fLot').innerHTML='<span class="ph">Tap to type or use next in line</span><button class="nx" id="nextLine">next in line</button>';$('#fTruck').innerHTML='<span class="ph">HR 00 0000</span>';
+  $('#cropTx').textContent='Choose the crop';$('#cropTx').className='ph';$('#cropList').classList.remove('open');$('#ddWrap').classList.remove('open-dd');band();$$('.field').forEach(f=>f.classList.remove('err','focus'))}
+$('#qAdd').addEventListener('click',()=>{resetAdd();openSheet('sh-add')});
+let typing=null;
+function typeInto(field,text,key){clearInterval(typing);$$('.field').forEach(f=>f.classList.remove('focus'));field.classList.add('focus');field.classList.remove('err');
+  field.innerHTML='<span class="tv"></span><span class="caret" style="height:20px"></span>';const tv=$('.tv',field);let i=0;
+  typing=setInterval(()=>{tv.textContent=text.slice(0,++i);if(i>=text.length){clearInterval(typing);state[key]=text;setTimeout(()=>{field.classList.remove('focus');$('.caret',field)?.remove()},500)}},70)}
+$('#sh-add').addEventListener('click',e=>{
+  if(e.target.closest('#fLot'))typeInto($('#fLot'),'KR-26K-0409','lotNo');
+  else if(e.target.closest('#fTruck'))typeInto($('#fTruck'),'HR 51 8840','truck');
+  else if(e.target.closest('#fCrop')){$('#cropList').classList.toggle('open');$('#ddWrap').classList.toggle('open-dd')}
+  else if(e.target.closest('[data-c]')){const c=e.target.closest('[data-c]').dataset.c;state.crop=c;$('#cropTx').textContent=c;$('#cropTx').className='';tick($('#cropTx'),c);$('#cropList').classList.remove('open');$('#ddWrap').classList.remove('open-dd');$('#fCrop').classList.remove('err');band()}
+});
+$('#bMinus').addEventListener('click',()=>{state.bags=Math.max(0,state.bags-1);tick($('#bags'),state.bags)});
+$('#bPlus').addEventListener('click',()=>{state.bags++;tick($('#bags'),state.bags)});
+const bandLim=()=>state.crop.startsWith('Bajra')?12:state.crop.startsWith('Cotton')?10:14;
+function band(){const b=$('#band'),w=state.mo>bandLim();b.classList.toggle('w',w);b.textContent=w?`Above the ${bandLim()}% band, send it to the drier first.`:'Inside the band, straight to the gravity table.'}
+$('#moMinus').addEventListener('click',()=>{state.mo=Math.max(5,+(state.mo-.1).toFixed(1));tick($('#mo'),state.mo.toFixed(1)+'%');band()});
+$('#moPlus').addEventListener('click',()=>{state.mo=+(state.mo+.1).toFixed(1);tick($('#mo'),state.mo.toFixed(1)+'%');band()});
+$('#logStart').addEventListener('click',async()=>{let bad=false;
+  [['lotNo','#fLot'],['truck','#fTruck'],['crop','#fCrop']].forEach(([k,s])=>{if(!state[k]){bad=true;$(s).classList.add('err');shake($(s))}});
+  if(bad)return;
+  const [crop]=state.crop.split(' ');
+  LOTS['0409']={id:state.lotNo,crop,truck:state.truck,t:+(state.bags*0.1).toFixed(1),m:state.mo,rec:'—',bags:'—',total:state.bags,stage:0,times:['Now','','','']};
+  await closeSheet();toast('Session started on line 4');push('detail','0409')});
+
+/* ---------- scan ---------- */
+function resetScan(){$('#frame').classList.remove('found');$('#findLot').innerHTML='Find the lot';$('#findLot').disabled=false}
+$('#findLot').addEventListener('click',async()=>{const b=$('#findLot');if(b.disabled)return;b.disabled=true;b.innerHTML='<span class="spin"></span>Reading the tag';
+  await wait(1100);$('#frame').classList.add('found');b.innerHTML=ico('check')+'Found it';await wait(900);push('detail','0404')});
+$('#flash').addEventListener('click',e=>{const b=e.currentTarget;b.classList.toggle('on');b.style.background=b.classList.contains('on')?'var(--lime)':'';b.style.color=b.classList.contains('on')?'var(--ink)':''});
+
+/* ---------- detail ---------- */
+function renderDetail(animStep){
+  const l=LOTS[state.dlot];
+  $('#dtTitle').textContent='Lot '+l.id;$('#dtSub').textContent=`${l.crop} · ${l.truck} · ${l.t} t`;
+  $('#dtSteps').innerHTML=STEPS.map((s,i)=>{const st=i<l.stage?'d':i===l.stage?'n':'p';
+    return `<div class="st ${st}" data-i="${i}"><span class="dot">${ico('check')}</span><span class="tx"><b>${s.n}</b><small>${st==='d'?s.d(l):st==='n'?s.c(l):'Up next'}</small></span><span class="tm">${l.times[i]||''}</span></div>`}).join('');
+  const wet=l.m>14;
+  $('#dtStats').innerHTML=`<div class="kpi${wet?'':''}" style="padding:13px;${wet?'background:var(--ambbg);color:var(--amb)':''}"><small style="${wet?'color:var(--amb)':''}">Moisture</small><b style="font-size:21px">${l.m}%</b></div><div class="kpi" style="padding:13px"><small>Recovery</small><b style="font-size:21px">${l.rec}</b></div><div class="kpi" style="padding:13px"><small>Bags</small><b style="font-size:21px">${l.bags}</b></div>`;
+  const last=l.stage>=3;
+  $('#dtMain').textContent=last?'Finish this session':`Move to ${STEPS[l.stage+1].n.toLowerCase()}`;
+  $('#dtCap').textContent=last?'Finishing asks you where the lot goes next.':`Do this when the ${STEPS[l.stage].n.toLowerCase()} stage is done.`;
+}
+$('#dtMain').addEventListener('click',async()=>{const l=LOTS[state.dlot];
+  if(l.stage>=3){state.lot=state.dlot;push('where');return}
+  const now=['14:33','14:34','14:36'][l.stage]||'14:38';l.times[l.stage]=now;l.stage++;l.times[l.stage]='Now';
+  if(l.stage===1&&l.rec==='—')l.rec='—';if(l.stage===3){l.bags='0';l.rec='82.4%'}
+  renderDetail(true);
+  const s=$(`#dtSteps .st[data-i="${l.stage-1}"] .dot`),n=$(`#dtSteps .st[data-i="${l.stage}"]`);
+  s.animate([{transform:'scale(.5)'},{transform:'scale(1)'}],{duration:600,easing:SNAP});
+  n.animate([{opacity:.3,transform:'translateX(-6px)'},{opacity:1,transform:'none'}],{duration:600,easing:OUT});
+  toast(`${STEPS[l.stage-1].n} done`)});
+
+/* ---------- sample / stoppage ---------- */
+$('#tests').addEventListener('click',e=>{const t=e.target.closest('.tog');if(t)t.classList.toggle('on')});
+$('#sendLab').addEventListener('click',async()=>{if(!$$('#tests .on').length){shake($('#tests'));return}state.done.sample=1;toast('Sample SM-26K-1182 sent to the lab');await wait(250);pop()});
+$('#mMinus').addEventListener('click',()=>{state.mins=Math.max(1,state.mins-1);tick($('#mins'),state.mins)});
+$('#mPlus').addEventListener('click',()=>{state.mins++;tick($('#mins'),state.mins)});
+$('#reasons').addEventListener('click',e=>{const r=e.target.closest('.reason');if(!r)return;$$('#reasons .reason').forEach(x=>x.classList.toggle('on',x===r));r.animate([{transform:'scale(.94)'},{transform:'scale(1)'}],{duration:500,easing:SNAP})});
+$('#saveStop').addEventListener('click',async()=>{state.done.stop=1;const tot=17+state.mins;['#dtMin','#dtMin2','#dtMin3'].forEach(s=>$(s).textContent=tot);$('[data-count="58"]')?.setAttribute('data-count',tot);
+  toast('Stoppage saved · manager notified');await wait(250);pop()});
+
+/* ---------- where ---------- */
+function prepWhere(){const l=LOTS[state.lot]||LOTS['0404'];$('#whereTx').textContent=`${l.id} finished treatment and packaging. ${l.total} bags. Pick one so the lot shows up in the right place.`;
+  $$('.dest').forEach(d=>d.classList.toggle('on',d.dataset.d===state.dest));setLab(state.lab,false);setGoTx(false)}
+function setLab(ok,animate){const w=$('#labWarn'),dp=$('.dest[data-d="dispatch"]');w.classList.toggle('ok',ok);dp.classList.toggle('locked',!ok);$('#lockIc').style.display=ok?'none':'';
+  w.firstElementChild.outerHTML=ico(ok?'check':'warn');
+  $('#labTx').textContent=ok?'The lab just released it. Germination 92%, purity 99.0%. Dispatch is open.':'This lot is still waiting on its germination result, so dispatch stays locked until the lab releases it.';
+  if(animate){w.animate([{transform:'scale(.96)'},{transform:'scale(1.02)'},{transform:'scale(1)'}],{duration:700,easing:SNAP});dp.animate([{opacity:.55},{opacity:1}],{duration:600,easing:OUT})}}
+function labTimer(){clearTimeout(timers.lab);if(state.lab)return;timers.lab=setTimeout(()=>{if(cur()!=='where')return;state.lab=true;setLab(true,true);toast('Lab released lot 0404')},4200)}
+function setGoTx(a){const tx=state.dest==='storage'?'Pick a bay':'Send to dispatch';const el=$('#whereGoTx');if(el.textContent!==tx)a?tick(el,tx):el.textContent=tx}
+$$('.dest').forEach(d=>d.addEventListener('click',()=>{if(d.classList.contains('locked')){shake(d);$('#labWarn').animate([{transform:'scale(1)'},{transform:'scale(1.03)'},{transform:'scale(1)'}],{duration:500,easing:SNAP});return}
+  state.dest=d.dataset.d;$$('.dest').forEach(x=>x.classList.toggle('on',x===d));setGoTx(true)}));
+$('#whereGo').addEventListener('click',()=>{if(state.dest==='storage')push('bay');else{state.mode='dispatch';finish();push('sent')}});
+
+/* ---------- bay ---------- */
+$('#bays').addEventListener('click',e=>{const b=e.target.closest('.bay');if(!b)return;
+  if(b.dataset.cap==='0'){shake(b);toast('Bay 5 is full');return}
+  if(b.dataset.cap){shake(b);toast('Bay 1 only fits about 130 bags');return}
+  $$('#bays .bay').forEach(x=>x.classList.toggle('on',x===b));state.bay=+b.dataset.b;$$('.bayN').forEach(n=>tick(n,'Bay '+state.bay))});
+$('#saveBay').addEventListener('click',()=>{state.mode='storage';finish();push('sent')});
+function finish(){state.done.finish=1;$('#sessDone').textContent=12}
+
+/* ---------- done (sent / stored) ---------- */
+const BAYFREE={2:'12%',3:'36%',4:'29%',6:'55%',7:'67%',8:'28%'};
+function renderDone(){const l=LOTS[state.lot]||LOTS['0404'],st=state.mode==='storage';
+  $('#dnIcon').innerHTML=ico(st?'archive':'truck');
+  $('#dnTitle').textContent=st?`Stored in Bay ${state.bay}`:'Sent to dispatch';
+  $('#dnTx').textContent=st?`${l.id} is off your line. ${l.total} bags on pallets in Bay ${state.bay}.`:`${l.id} is off your line. ${l.total} bags, 26.6 t, waiting to load.`;
+  $('#dnStats').innerHTML=st?`<div class="stat"><small>Bags</small><b>${l.total}</b></div><div class="stat"><small>Recovery</small><b>83.1%</b></div><div class="stat"><small>Bay</small><b class="l">Bay ${state.bay}</b></div>`
+    :`<div class="stat"><small>Bags</small><b>${l.total}</b></div><div class="stat"><small>Recovery</small><b>83.1%</b></div><div class="stat"><small>Germination</small><b class="l">Cleared</b></div>`;
+  const steps=st?[['Lot left your line','You, just now'],['Shows on the Storage page',`Bay ${state.bay}, row by row`],['Waits for a load','Plant manager picks when'],['Sent to dispatch','From the Storage page'],['Filed to SATHI','The moment it is saved']]
+    :[['Lot left your line','You, just now'],['Waiting to load','Shows on the Dispatch page at once'],['Put on a vehicle','Suresh Kumar picks the load'],['Gate pass signed','Plant manager only'],['Filed to SATHI','The moment the vehicle leaves']];
+  $('#dnSteps').innerHTML=steps.map((s,i)=>`<div class="st p" data-i="${i}"><span class="dot">${ico('check')}</span><span class="tx"><b>${s[0]}</b><small>${s[1]}</small></span></div>`).join('')}
+async function runDone(){const sts=$$('#dnSteps .st');const cls=['d','d','n','g','g'];
+  for(let i=0;i<sts.length;i++){await wait(i<3?260:120);sts[i].className='st '+cls[i];if(i<3)$('.dot',sts[i]).animate([{transform:'scale(.4)'},{transform:'scale(1)'}],{duration:600,easing:SNAP})}}
+
+/* ---------- you ---------- */
+const HI={today:'आज',queue:'कतार',scan:'स्कैन',alerts:'अलर्ट',you:'आप'}, EN={today:'Today',queue:'Queue',scan:'Scan',alerts:'Alerts',you:'You'};
+$$('.sw').forEach(s=>s.addEventListener('click',()=>{s.classList.toggle('on');const on=s.classList.contains('on'),k=s.dataset.sw;
+  if(k==='hindi'){$$('.tab').forEach(t=>{const l=$('.tl-l',t);tick(l,(on?HI:EN)[t.dataset.tab])});toast(on?'हिंदी चालू है':'English is on')}
+  if(k==='big'){vp.classList.toggle('big',on)}
+  if(k==='buzz'&&on){toast('Alerts will buzz')}}));
+$('#eyeBtn').addEventListener('click',e=>{const sh=$('#empId').textContent==='UXD-xxxx';tick($('#empId'),sh?'UXD-2207':'UXD-xxxx');e.currentTarget.innerHTML=ico(sh?'eye':'eye-off')});
+$('#syncBtn').addEventListener('click',async()=>{const t=$('#syncTx');if(t.textContent.startsWith('All'))return;tick(t,'Syncing…');await wait(1200);tick(t,'All records synced');toast('2 records synced')});
+$('#endShift').addEventListener('click',()=>openSheet('sh-end'));
+$('#confirmEnd').addEventListener('click',async()=>{await closeSheet();toast('Handed over to shift C');await wait(500);reset(true)});
+
+/* ---------- panel / notes ---------- */
+const META={
+ splash:['01','Splash','Lime-first brand moment. Dots and leaves pop in, the wordmark rises, then it hands off to login.',['Tap anywhere to skip']],
+ mobile:['02','Your mobile number','One field, one big button, a keypad sized for gloved thumbs.',['Type on the keypad','Send me the code']],
+ otp:['03','The code we sent','Four boxes and a live resend timer. The last digit checks the code on its own.',['Type any 4 digits','Boxes flash lime when it passes']],
+ plant:['04','Pick your plant','Set once per shift, so nothing else has to ask.',['Choose a plant','Start my shift']],
+ today:['05','Today','What is running, what needs you, who is at the gate. Rows clear as you act on them.',['View all sessions','Tap a Needs you row','See all trucks']],
+ sessions:['06','Active sessions','Every line with its stage bar. Filter chips reflow with FLIP motion.',['Try the filter chips','Finish this session on L1']],
+ queue:['08','Gate queue','Trucks ranked by wait. Starting one opens its session at intake.',['Plus opens Add a session','Filter re-sorts the queue']],
+ scan:['07','Scan a lot tag','Dark camera view with a live laser. Reading lands you on the lot.',['Find the lot','Flash toggles']],
+ detail:['09','Session detail','Four-stage timeline. Move it forward stage by stage, then finish.',['Move to the next stage','Open sample, stoppage or passport']],
+ sample:['10','Draw a sample','Instructions first, then the slip details and tests.',['Toggle tests','Send it to the lab']],
+ stoppage:['11','Log a stoppage','Minutes, a reason, a note. Saving updates downtime everywhere.',['Plus and minus the minutes','Pick a reason']],
+ passport:['14','Lot passport','The full chain from source seed to gate pass.',[]],
+ where:['12','Where does it go','Storage or dispatch. Dispatch unlocks live when the lab releases the lot.',['Wait a few seconds for the lab','Try tapping dispatch while locked']],
+ bay:['13','Put it away','Bay grid with fill bars. Full or tight bays refuse with a shake.',['Pick a bay','Save into the bay']],
+ sent:['12a','Session closed','Confirmation plus a live view of what happens next.',['Start the next truck','Go to today']],
+ alerts:['15','Alerts','Actionable alerts first, information after. Resolved ones disappear.',['Filter by Needs you','Act straight from a card']],
+ you:['16','You','Profile, shift stats and floor settings.',['Hindi swaps the tab labels','Bigger text scales the app','End my shift']]
+};
+const FLOW=[['Sign in',['splash','mobile','otp','plant']],['On the floor',['today','sessions','queue','scan','alerts','you']],['A session',['detail','sample','stoppage','passport']],['Finishing',['where','bay','sent']]];
+function panel(id){return;const m=META[id];if(!m)return;$('#nEye').textContent='Screen '+m[0];$('#nTitle').textContent=m[1];$('#nTx').textContent=m[2];$('#nList').innerHTML=m[3].map(x=>`<li>${x}</li>`).join('');
+  $$('#flow button').forEach(b=>b.classList.toggle('act',b.dataset.jump===id))}
+const CHAIN={splash:['splash'],mobile:['mobile'],otp:['mobile','otp'],plant:['mobile','otp','plant'],sessions:['today','sessions'],detail:['today','detail'],sample:['today','detail','sample'],stoppage:['today','detail','stoppage'],passport:['today','detail','passport'],where:['today','detail','where'],bay:['today','detail','where','bay'],sent:['today','sent']};
+function jump(id){if(sheetOpen)return;const ch=CHAIN[id]||[id];if(TABS.includes(ch[0]))curTab=ch[0];
+  if(id==='detail'||id==='where'||id==='bay')state.dlot=state.lot='0404';if(id==='sent'&&!state.mode)state.mode='dispatch';
+  if(id==='splash'){reset(false);return}
+  fade(id,ch,id==='detail'?'0404':null)}
+function reset(toSplash){Object.assign(state,{lab:false,dest:'storage',bay:3,done:{},mode:null,mins:41,code:''});LOTS['0404'].stage=3;
+  ['#dtMin','#dtMin2','#dtMin3'].forEach(s=>$(s).textContent=58);$('#mins').textContent=41;
+  $$('[data-filter] .chip').forEach((c,i)=>c.classList.toggle('on',c.dataset.f==='all'));$$('#sessList > *,#alList > *').forEach(n=>{n.classList.remove('hidden');n.dataset.gone=''});
+  fade('splash',['splash'],null,{big:true})}
+
+
+/* ---------- boot ---------- */
+S('splash').classList.add('on');chrome('splash');requestAnimationFrame(()=>after('splash'));
+document.fonts&&document.fonts.ready.then(movePill);
+})();
+</script>
+</body>
+</html>
